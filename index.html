@@ -8,7 +8,6 @@
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
         
-        /* 1. 完全に余計な文字を消し、最上部を青くする */
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
         
         header { 
@@ -20,7 +19,6 @@
         }
         header h1 { margin: 0; font-size: 2rem; font-weight: bold; }
 
-        /* 2. 均等配置メニュー（画像と同じ青い丸みデザイン） */
         nav { 
             background: white; 
             display: flex; 
@@ -41,21 +39,19 @@
         }
 
         .nav-btn { 
-            flex: 1; /* PCで均等に並べる */
+            flex: 1;
             border: none; 
             background: none; 
             padding: 10px 5px; 
             cursor: pointer; 
             font-weight: bold; 
             color: #555; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
             border-radius: 25px;
             transition: 0.2s;
             text-align: center;
-            white-space: nowrap;
         }
         
-        /* 選択中のタブのデザイン */
         .nav-btn.active { 
             background: var(--blue); 
             color: white; 
@@ -64,63 +60,32 @@
 
         .container { padding: 25px 15px; max-width: 650px; margin: auto; }
 
-        /* 3. 画像通りの「同期と管理」カード */
-        .card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-        }
-        .card h2 { margin-top: 0; font-size: 1.6rem; margin-bottom: 25px; border-bottom: none; }
-        
-        /* 大きな緑のボタン */
-        .btn-green { 
-            background: var(--green); 
-            color: white; 
-            border: none; 
-            padding: 16px; 
-            width: 100%; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-bottom: 25px; 
-            font-size: 1rem;
-            box-shadow: 0 3px 0 #4cae4c;
-        }
-        .btn-green:active { transform: translateY(2px); box-shadow: none; }
-
-        /* 入力フォーム */
-        input, select, textarea { 
-            width: 100%; 
-            padding: 14px; 
-            margin-bottom: 15px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 1rem;
-            background: #fff;
-        }
-        
-        .btn-blue { 
-            background: var(--blue); 
-            color: white; 
-            border: none; 
-            padding: 16px; 
-            width: 100%; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer;
-        }
-
-        /* リンクカード */
+        /* リンクカードのデザイン */
         .link-card { 
-            background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; 
+            background: white; padding: 20px; margin-bottom: 12px; border-radius: 12px; 
             box-shadow: 0 3px 10px rgba(0,0,0,0.03); border-left: 6px solid var(--blue);
+            position: relative;
         }
+        .link-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        
+        /* どの項目のURLか表示するバッジ */
+        .cat-badge {
+            font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold;
+        }
+        .badge-keio { background: #ff0080; }
+        .badge-jr { background: #008000; }
+        .badge-others { background: #6c757d; }
+
         .link-title { font-size: 1.1rem; color: var(--blue); text-decoration: none; font-weight: bold; }
-        .link-desc { font-size: 0.85rem; color: #666; margin-top: 8px; }
+        .link-desc { font-size: 0.85rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; float: right; font-weight: bold; }
+
+        /* 管理設定カード */
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .btn-green { background: var(--green); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px; font-size: 1rem; }
+        .btn-blue { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
 
         @media (max-width: 500px) {
             .nav-inner { overflow-x: auto; justify-content: flex-start; }
@@ -151,12 +116,10 @@
         <div id="links-list"></div>
     </div>
 
-    <!-- 管理画面 -->
     <div id="settings" style="display:none;">
         <div class="card">
             <h2>同期と管理</h2>
             <button class="btn-green" onclick="importData()">クラウドから読込 (受信)</button>
-            
             <input type="password" id="admin-pass" placeholder="パスワードを入力(0829)">
             <button class="btn-blue" onclick="unlockEditor()" style="margin-bottom: 20px;">ロック解除</button>
             
@@ -179,10 +142,12 @@
 </div>
 
 <script>
-    const GAS_URL = "https://google.com";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
     const MASTER_PASS = "0829"; 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
+
+    const catLabels = { keio: "京王", jr: "JR線", docs: "資料", others: "その他" };
 
     function showSection(cat, btn) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -198,13 +163,25 @@
     function render(filter = 'all') {
         const list = document.getElementById('links-list');
         list.innerHTML = '';
-        const filtered = links.filter(item => filter === 'all' || item.cat === filter);
-        filtered.forEach((item, index) => {
+        
+        // フィルタリング処理
+        const filtered = links.filter(item => {
+            if (filter === 'all') {
+                return item.cat !== 'docs'; // 【重要】「すべて」では資料を除外
+            }
+            return item.cat === filter;
+        });
+
+        filtered.forEach((item) => {
+            const originalIndex = links.indexOf(item);
             list.innerHTML += `
                 <div class="link-card">
-                    ${isUnlocked ? `<button class="delete-btn" onclick="deleteLink(${links.indexOf(item)})">削除</button>` : ''}
-                    <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
+                    <div class="link-header">
+                        <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
+                        <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
+                    </div>
                     ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
+                    ${isUnlocked ? `<button class="delete-btn" onclick="deleteLink(${originalIndex})">削除</button>` : ''}
                 </div>`;
         });
     }
@@ -235,7 +212,7 @@
         try {
             await fetch(GAS_URL, { method: "POST", body: JSON.stringify(links) });
             document.getElementById('sync-status').innerText = "クラウド保存完了！";
-        } catch (e) { document.getElementById('sync-status').innerText = "エラー発生"; }
+        } catch (e) { document.getElementById('sync-status').innerText = "エラー"; }
     }
 
     async function importData() {
@@ -244,7 +221,7 @@
             const res = await fetch(GAS_URL);
             links = await res.json();
             save();
-            document.getElementById('sync-status').innerText = "同期完了しました！";
+            document.getElementById('sync-status').innerText = "同期完了！";
         } catch (e) { document.getElementById('sync-status').innerText = "受信エラー"; }
     }
     render();
