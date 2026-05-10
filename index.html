@@ -26,6 +26,7 @@
         .badge-docs { background: #ffc107; color: #333; }
         .badge-others { background: #6c757d; }
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
+        .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; float: right; font-weight: bold; font-size: 0.8rem; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         .btn-green { background: var(--green); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px; font-size: 1rem; }
@@ -48,7 +49,7 @@
 
 <div class="container">
     <div class="search-container" id="search-bar-wrap">
-        <input type="text" id="keyword-search" class="search-input" placeholder="🔍 キーワードで検索..." oninput="renderWithSearch()">
+        <input type="text" id="keyword-search" class="search-input" placeholder="🔍 タイトルで検索..." oninput="renderWithSearch()">
     </div>
 
     <div id="links-view">
@@ -61,14 +62,12 @@
             <h2>同期と管理</h2>
             <button class="btn-green" onclick="importData()">クラウドから読込 (受信)</button>
             
-            <!-- パスワード入力エリア -->
             <div id="password-area">
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">編集用パスワードを入力してください</p>
                 <input type="password" id="admin-pass" placeholder="Password">
                 <button class="btn-blue" onclick="unlockEditor()">ロック解除</button>
             </div>
             
-            <!-- ロック解除後に表示される編集ツール -->
             <div id="edit-tools" style="display:none; border-top: 2px dashed #eee; padding-top: 25px;">
                 <p style="font-weight: bold; color: var(--blue); margin-bottom: 15px;">✅ 編集モード（ロック解除済）</p>
                 <select id="new-cat">
@@ -77,7 +76,7 @@
                     <option value="docs">資料</option>
                     <option value="others">その他</option>
                 </select>
-                <input type="text" id="new-title" placeholder="サイト名">
+                <input type="text" id="new-title" placeholder="タイトル">
                 <input type="url" id="new-url" placeholder="URL (https://...)">
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
                 <button class="btn-blue" onclick="addLink()">リストに追加</button>
@@ -89,7 +88,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
+    const GAS_URL = "https://google.com";
     const MASTER_PASS = "0829"; 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
@@ -117,7 +116,8 @@
         list.innerHTML = '';
         const filtered = links.filter(item => {
             const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
-            const matchWord = item.title.toLowerCase().includes(keyword) || (item.desc && item.desc.toLowerCase().includes(keyword));
+            // 検索条件をタイトルのみに限定
+            const matchWord = item.title.toLowerCase().includes(keyword);
             return matchCat && matchWord;
         });
         filtered.forEach((item) => {
@@ -136,9 +136,7 @@
     function unlockEditor() {
         if(document.getElementById('admin-pass').value === MASTER_PASS) {
             isUnlocked = true;
-            // パスワード入力エリアを完全に隠す
             document.getElementById('password-area').style.display = 'none';
-            // 編集ツールを表示する
             document.getElementById('edit-tools').style.display = 'block';
             renderWithSearch();
         } else { alert('パスワードが違います'); }
