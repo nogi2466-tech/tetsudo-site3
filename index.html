@@ -55,7 +55,8 @@
         <div class="card">
             <h2>同期と管理</h2>
             <button class="btn-green" onclick="importData()">クラウドから読込 (受信)</button>
-            <input type="password" id="admin-pass" placeholder="パスワードを入力(0829)">
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">編集用パスワードを入力してください</p>
+            <input type="password" id="admin-pass" placeholder="Password">
             <button class="btn-blue" onclick="unlockEditor()" style="margin-bottom: 20px;">ロック解除</button>
             
             <div id="edit-tools" style="display:none; border-top: 2px dashed #eee; padding-top: 25px;">
@@ -65,8 +66,8 @@
                     <option value="docs">資料</option>
                     <option value="others">その他</option>
                 </select>
-                <input type="text" id="new-title" placeholder="タイトル">
-                <input type="url" id="new-url" placeholder="URL">
+                <input type="text" id="new-title" placeholder="サイト名">
+                <input type="url" id="new-url" placeholder="URL (https://...)">
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
                 <button class="btn-blue" onclick="addLink()">リストに追加</button>
                 <button class="btn-blue" style="background:#666; margin-top:10px;" onclick="exportData()">クラウドに保存 (送信)</button>
@@ -98,8 +99,6 @@
     function render(filter = 'all') {
         const list = document.getElementById('links-list');
         list.innerHTML = '';
-        
-        // 「すべて」のときは「資料」を除外するフィルタリング
         const filtered = links.filter(item => filter === 'all' ? item.cat !== 'docs' : item.cat === filter);
         
         filtered.forEach((item) => {
@@ -149,9 +148,9 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(links)
             });
-            status.innerText = "クラウド保存完了！（反映まで数秒かかります）";
+            status.innerText = "クラウド保存完了！";
         } catch (e) {
-            status.innerText = "送信エラー。GASのデプロイ設定を確認してください。";
+            status.innerText = "送信エラーが発生しました。";
         }
     }
 
@@ -164,7 +163,7 @@
             save();
             status.innerText = "同期完了しました！";
         } catch (e) {
-            status.innerText = "受信エラーが発生しました";
+            status.innerText = "受信エラーが発生しました。";
         }
     }
     render();
