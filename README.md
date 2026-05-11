@@ -6,7 +6,6 @@
     <title>tetsudo-site</title>
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
-        /* カテゴリーカラーの定義 */
         :root { --color-keio: #ff0080; --color-jr: #008000; --color-others: #6c757d; --color-docs: #ffc107; }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
@@ -22,7 +21,6 @@
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
         
         .link-card { background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); position: relative; border-left: 6px solid #ccc; }
-        /* カテゴリーごとの左線色 */
         .card-keio { border-left-color: var(--color-keio); }
         .card-jr { border-left-color: var(--color-jr); }
         .card-others { border-left-color: var(--color-others); }
@@ -36,7 +34,11 @@
         .badge-others { background: var(--color-others); }
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
-        .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; float: right; font-weight: bold; font-size: 0.8rem; }
+        
+        .action-btns { margin-top: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 15px; }
+        .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; padding: 0; }
+        .edit-btn { color: var(--blue); border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; padding: 0; }
+
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         .btn-green { background: var(--green); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px; font-size: 1rem; }
         .btn-blue { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
@@ -48,12 +50,12 @@
 <header><h1>tetsudo-site</h1></header>
 
 <nav><div class="nav-inner">
-    <button class="nav-btn active" onclick="showSection('all', this)">すべて</button>
+    <button id="nav-all" class="nav-btn active" onclick="showSection('all', this)">すべて</button>
     <button class="nav-btn" onclick="showSection('keio', this)">京王</button>
     <button class="nav-btn" onclick="showSection('jr', this)">JR線</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
-    <button class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
+    <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
 <div class="container">
@@ -68,13 +70,16 @@
 
     <div id="settings" style="display:none;">
         <div class="card">
-            <h2>同期と管理</h2>
-            <button class="btn-green" onclick="importData()">クラウドから読込 (受信)</button>
+            <h2 id="edit-mode-title">同期と管理</h2>
+            <button class="btn-green" id="import-btn" onclick="importData()">クラウドから読込 (受信)</button>
+            
             <div id="password-area">
                 <input type="password" id="admin-pass" placeholder="Password">
                 <button class="btn-blue" onclick="unlockEditor()">ロック解除</button>
             </div>
+            
             <div id="edit-tools" style="display:none; border-top: 2px dashed #eee; padding-top: 25px;">
+                <input type="hidden" id="edit-index" value="-1">
                 <select id="new-cat">
                     <option value="keio">京王</option>
                     <option value="jr">JR線</option>
@@ -84,8 +89,9 @@
                 <input type="text" id="new-title" placeholder="タイトル">
                 <input type="url" id="new-url" placeholder="URL">
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
-                <button class="btn-blue" onclick="addLink()">リストに追加</button>
-                <button class="btn-blue" style="background:#666; margin-top:10px;" onclick="exportData()">クラウドに保存 (送信)</button>
+                <button class="btn-blue" id="add-update-btn" onclick="addOrUpdateLink()">リストに追加</button>
+                <button class="btn-blue" id="cancel-edit-btn" style="background:#666; margin-top:10px; display:none;" onclick="resetForm()">キャンセル</button>
+                <button class="btn-blue" id="export-btn" style="background:#666; margin-top:10px;" onclick="exportData()">クラウドに保存 (送信)</button>
             </div>
             <p id="sync-status" style="text-align:center; font-size:0.85rem; color:var(--blue); margin-top:15px; font-weight:bold;"></p>
         </div>
@@ -103,13 +109,13 @@
     function showSection(cat, btn) {
         currentFilter = cat;
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if(btn) btn.classList.add('active');
         const isSettings = (cat === 'settings');
         document.getElementById('links-view').style.display = isSettings ? 'none' : 'block';
         document.getElementById('settings').style.display = isSettings ? 'block' : 'none';
         document.getElementById('search-bar-wrap').style.display = isSettings ? 'none' : 'block';
         if(!isSettings) {
-            document.getElementById('page-title').innerText = btn.innerText;
+            document.getElementById('page-title').innerText = btn ? btn.innerText : 'すべて';
             renderWithSearch();
         }
     }
@@ -119,24 +125,28 @@
         const keyword = document.getElementById('keyword-search').value.toLowerCase();
         list.innerHTML = '';
 
-        // フィルタリングと名前順ソート
         let displayList = links
             .filter(item => {
                 const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
                 const matchWord = item.title.toLowerCase().includes(keyword);
                 return matchCat && matchWord;
             })
-            .sort((a, b) => a.title.localeCompare(b.title, 'ja')); // 名前順にソート
+            .sort((a, b) => a.title.localeCompare(b.title, 'ja'));
 
         displayList.forEach((item) => {
-            const originalIndex = links.findIndex(l => l === item);
+            // 元の配列でのインデックスを探す
+            const originalIndex = links.indexOf(item);
             list.innerHTML += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
                 </div>
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
-                ${isUnlocked ? `<button class="delete-btn" onclick="deleteLink(${originalIndex})">削除</button>` : ''}
+                ${isUnlocked ? `
+                <div class="action-btns">
+                    <button class="edit-btn" onclick="startEdit(${originalIndex})">編集</button>
+                    <button class="delete-btn" onclick="deleteLink(${originalIndex})">削除</button>
+                </div>` : ''}
             </div>`;
         });
     }
@@ -150,16 +160,52 @@
         } else { alert('パスワードが違います'); }
     }
 
-    function addLink() {
-        const title = document.getElementById('new-title').value;
-        const url = document.getElementById('new-url').value;
-        if(!title || !url) return alert('入力してください');
-        links.push({ title, url, desc: document.getElementById('new-desc').value, cat: document.getElementById('new-cat').value });
-        save();
+    function startEdit(index) {
+        const item = links[index];
+        document.getElementById('edit-index').value = index;
+        document.getElementById('new-cat').value = item.cat;
+        document.getElementById('new-title').value = item.title;
+        document.getElementById('new-url').value = item.url;
+        document.getElementById('new-desc').value = item.desc || '';
+        
+        document.getElementById('add-update-btn').innerText = "修正を保存する";
+        document.getElementById('cancel-edit-btn').style.display = "block";
+        document.getElementById('edit-mode-title').innerText = "リンクを編集";
+        
+        showSection('settings', document.getElementById('nav-settings'));
+    }
+
+    function resetForm() {
+        document.getElementById('edit-index').value = "-1";
         document.getElementById('new-title').value = '';
         document.getElementById('new-url').value = '';
         document.getElementById('new-desc').value = '';
-        alert('追加しました');
+        document.getElementById('add-update-btn').innerText = "リストに追加";
+        document.getElementById('cancel-edit-btn').style.display = "none";
+        document.getElementById('edit-mode-title').innerText = "同期と管理";
+    }
+
+    function addOrUpdateLink() {
+        const index = parseInt(document.getElementById('edit-index').value);
+        const title = document.getElementById('new-title').value;
+        const url = document.getElementById('new-url').value;
+        const cat = document.getElementById('new-cat').value;
+        const desc = document.getElementById('new-desc').value;
+
+        if(!title || !url) return alert('入力してください');
+
+        const newItem = { title, url, desc, cat };
+
+        if (index === -1) {
+            links.push(newItem);
+            alert('追加しました');
+        } else {
+            links[index] = newItem;
+            alert('修正しました');
+        }
+
+        save();
+        resetForm();
     }
 
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
