@@ -6,7 +6,14 @@
     <title>tetsudo-site</title>
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
-        :root { --color-keio: #ff0080; --color-jr: #008000; --color-others: #6c757d; --color-docs: #ffc107; }
+        /* カテゴリーカラーの設定 */
+        :root { 
+            --color-keio: #ff0080; 
+            --color-jr: #008000; 
+            --color-private: #f39c12; /* 大手私鉄の色 */
+            --color-others: #6c757d; 
+            --color-docs: #ffc107; 
+        }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
         header { background: var(--blue); color: white; padding: 35px 0; text-align: center; }
@@ -23,6 +30,7 @@
         .link-card { background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); position: relative; border-left: 6px solid #ccc; }
         .card-keio { border-left-color: var(--color-keio); }
         .card-jr { border-left-color: var(--color-jr); }
+        .card-private { border-left-color: var(--color-private); }
         .card-others { border-left-color: var(--color-others); }
         .card-docs { border-left-color: var(--color-docs); }
 
@@ -30,14 +38,15 @@
         .cat-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; white-space: nowrap; }
         .badge-keio { background: var(--color-keio); }
         .badge-jr { background: var(--color-jr); }
+        .badge-private { background: var(--color-private); }
         .badge-docs { background: var(--color-docs); color: #333; }
         .badge-others { background: var(--color-others); }
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
         .action-btns { margin-top: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 15px; }
-        .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; padding: 0; }
-        .edit-btn { color: var(--blue); border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; padding: 0; }
+        .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .edit-btn { color: var(--blue); border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
 
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         .btn-green { background: var(--green); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px; font-size: 1rem; }
@@ -52,7 +61,8 @@
 <nav><div class="nav-inner">
     <button id="nav-all" class="nav-btn active" onclick="showSection('all', this)">すべて</button>
     <button class="nav-btn" onclick="showSection('keio', this)">京王</button>
-    <button class="nav-btn" onclick="showSection('jr', this)">JR線</button>
+    <button class="nav-btn" onclick="showSection('jr', this)">JR</button>
+    <button class="nav-btn" onclick="showSection('private', this)">大手私鉄</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
     <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
@@ -82,7 +92,8 @@
                 <input type="hidden" id="edit-index" value="-1">
                 <select id="new-cat">
                     <option value="keio">京王</option>
-                    <option value="jr">JR線</option>
+                    <option value="jr">JR</option>
+                    <option value="private">大手私鉄</option>
                     <option value="others">その他</option>
                     <option value="docs">資料</option>
                 </select>
@@ -104,7 +115,7 @@
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
     let currentFilter = 'all';
-    const catLabels = { keio: "京王", jr: "JR線", docs: "資料", others: "その他" };
+    const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他" };
 
     function showSection(cat, btn) {
         currentFilter = cat;
@@ -134,7 +145,6 @@
             .sort((a, b) => a.title.localeCompare(b.title, 'ja'));
 
         displayList.forEach((item) => {
-            // 元の配列でのインデックスを探す
             const originalIndex = links.indexOf(item);
             list.innerHTML += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
@@ -167,11 +177,9 @@
         document.getElementById('new-title').value = item.title;
         document.getElementById('new-url').value = item.url;
         document.getElementById('new-desc').value = item.desc || '';
-        
         document.getElementById('add-update-btn').innerText = "修正を保存する";
         document.getElementById('cancel-edit-btn').style.display = "block";
         document.getElementById('edit-mode-title').innerText = "リンクを編集";
-        
         showSection('settings', document.getElementById('nav-settings'));
     }
 
@@ -191,19 +199,10 @@
         const url = document.getElementById('new-url').value;
         const cat = document.getElementById('new-cat').value;
         const desc = document.getElementById('new-desc').value;
-
         if(!title || !url) return alert('入力してください');
-
         const newItem = { title, url, desc, cat };
-
-        if (index === -1) {
-            links.push(newItem);
-            alert('追加しました');
-        } else {
-            links[index] = newItem;
-            alert('修正しました');
-        }
-
+        if (index === -1) { links.push(newItem); alert('追加しました'); }
+        else { links[index] = newItem; alert('修正しました'); }
         save();
         resetForm();
     }
