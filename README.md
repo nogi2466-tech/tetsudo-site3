@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>tetsudo-site</title>
-    <link href="https://googleapis.com" rel="stylesheet">
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
+        /* カテゴリーカラーの定義 */
+        :root { --color-keio: #ff0080; --color-jr: #008000; --color-others: #6c757d; --color-docs: #ffc107; }
+
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
         header { background: var(--blue); color: white; padding: 35px 0; text-align: center; }
         header h1 { margin: 0; font-size: 1.8rem; font-weight: bold; }
@@ -18,13 +20,20 @@
         .container { padding: 20px 15px; max-width: 600px; margin: auto; }
         .search-container { margin-bottom: 20px; }
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
-        .link-card { background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); border-left: 6px solid var(--blue); position: relative; }
+        
+        .link-card { background: white; padding: 18px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); position: relative; border-left: 6px solid #ccc; }
+        /* カテゴリーごとの左線色 */
+        .card-keio { border-left-color: var(--color-keio); }
+        .card-jr { border-left-color: var(--color-jr); }
+        .card-others { border-left-color: var(--color-others); }
+        .card-docs { border-left-color: var(--color-docs); }
+
         .link-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .cat-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; white-space: nowrap; }
-        .badge-keio { background: #ff0080; }
-        .badge-jr { background: #008000; }
-        .badge-docs { background: #ffc107; color: #333; }
-        .badge-others { background: #6c757d; }
+        .badge-keio { background: var(--color-keio); }
+        .badge-jr { background: var(--color-jr); }
+        .badge-docs { background: var(--color-docs); color: #333; }
+        .badge-others { background: var(--color-others); }
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; float: right; font-weight: bold; font-size: 0.8rem; }
@@ -42,8 +51,8 @@
     <button class="nav-btn active" onclick="showSection('all', this)">すべて</button>
     <button class="nav-btn" onclick="showSection('keio', this)">京王</button>
     <button class="nav-btn" onclick="showSection('jr', this)">JR線</button>
-    <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
+    <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
     <button class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
@@ -61,39 +70,34 @@
         <div class="card">
             <h2>同期と管理</h2>
             <button class="btn-green" onclick="importData()">クラウドから読込 (受信)</button>
-            
             <div id="password-area">
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">編集用パスワードを入力してください</p>
                 <input type="password" id="admin-pass" placeholder="Password">
                 <button class="btn-blue" onclick="unlockEditor()">ロック解除</button>
             </div>
-            
             <div id="edit-tools" style="display:none; border-top: 2px dashed #eee; padding-top: 25px;">
-                <p style="font-weight: bold; color: var(--blue); margin-bottom: 15px;">✅ 編集モード（ロック解除済）</p>
                 <select id="new-cat">
                     <option value="keio">京王</option>
                     <option value="jr">JR線</option>
-                    <option value="docs">資料</option>
                     <option value="others">その他</option>
+                    <option value="docs">資料</option>
                 </select>
                 <input type="text" id="new-title" placeholder="タイトル">
-                <input type="url" id="new-url" placeholder="URL (https://...)">
+                <input type="url" id="new-url" placeholder="URL">
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
                 <button class="btn-blue" onclick="addLink()">リストに追加</button>
                 <button class="btn-blue" style="background:#666; margin-top:10px;" onclick="exportData()">クラウドに保存 (送信)</button>
             </div>
-            <p id="sync-status" style="text-align:center; font-size:0.85rem; color:var(--blue); margin-top:15px; font-weight:bold; min-height:1.2em;"></p>
+            <p id="sync-status" style="text-align:center; font-size:0.85rem; color:var(--blue); margin-top:15px; font-weight:bold;"></p>
         </div>
     </div>
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
+    const GAS_URL = "https://google.com";
     const MASTER_PASS = "0829"; 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
     let currentFilter = 'all';
-
     const catLabels = { keio: "京王", jr: "JR線", docs: "資料", others: "その他" };
 
     function showSection(cat, btn) {
@@ -114,15 +118,19 @@
         const list = document.getElementById('links-list');
         const keyword = document.getElementById('keyword-search').value.toLowerCase();
         list.innerHTML = '';
-        const filtered = links.filter(item => {
-            const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
-            // 検索条件をタイトルのみに限定
-            const matchWord = item.title.toLowerCase().includes(keyword);
-            return matchCat && matchWord;
-        });
-        filtered.forEach((item) => {
-            const originalIndex = links.indexOf(item);
-            list.innerHTML += `<div class="link-card">
+
+        // フィルタリングと名前順ソート
+        let displayList = links
+            .filter(item => {
+                const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
+                const matchWord = item.title.toLowerCase().includes(keyword);
+                return matchCat && matchWord;
+            })
+            .sort((a, b) => a.title.localeCompare(b.title, 'ja')); // 名前順にソート
+
+        displayList.forEach((item) => {
+            const originalIndex = links.findIndex(l => l === item);
+            list.innerHTML += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
