@@ -147,8 +147,8 @@
 </div>
 
 <script>
-    // ⚠️ 新しいデプロイURLをここに貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTSfqfJUSZXJllYNQVmjzxlt7rF2V3EDDzwh-vk0Cfz1Q9MPfCgXzH1j2pNhNd7DAFFg/exec"; 
+    // ⚠️ 新しくデプロイした「ウェブアプリのURL」をここに貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzOxyahOZIvjQ_J2TA7M_lNlGaOEf30jtLF_no-16MERQN5UU6WAcUSAa1omfDJ1xPqcA/exec"; 
     const MASTER_PASS = "0829"; 
 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -218,7 +218,6 @@
         } else { alert('パスワードが違います'); }
     }
 
-    // ★容量最適化リサイズ
     function previewFile() {
         const file = document.getElementById('new-img').files;
         if (!file || file.length === 0) return;
@@ -227,7 +226,6 @@
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                // 最大横幅を900px、画質75%に固定し、くっきり見えつつデータ量を大幅に節減
                 const maxW = 900; 
                 const canvas = document.createElement('canvas');
                 const scaleFactor = Math.min(maxW / img.width, 1);
@@ -314,7 +312,7 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-    /* ★シンプル一括送信 */
+    /* 送信関数 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         const statusEl = document.getElementById('sync-status');
@@ -328,7 +326,7 @@
             });
 
             if (response.ok) {
-                statusEl.innerText = "クラウドへの保存が完全に完了しました！";
+                statusEl.innerText = "クラウドへの保存が完了しました！";
             } else {
                 statusEl.innerText = "送信エラーが発生しました";
             }
@@ -338,10 +336,11 @@
         }
     }
 
-    /* ★シンプル一括受信 */
+    /* 受信関数（大容量対応） */
     async function importData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
-        document.getElementById('sync-status').innerText = "受信中...";
+        const statusEl = document.getElementById('sync-status');
+        statusEl.innerText = "受信中...";
         try {
             const res = await fetch(GAS_URL, { 
                 method: "GET",
@@ -353,12 +352,12 @@
             if(Array.isArray(data)) {
                 links = data;
                 save();
-                document.getElementById('sync-status').innerText = "同期完了しました！";
+                statusEl.innerText = "同期（読み込み）完了しました！";
             } else {
-                document.getElementById('sync-status').innerText = "データ形式が正しくありません";
+                statusEl.innerText = "データがまだ登録されていないか、形式が正しくありません";
             }
         } catch (e) { 
-            document.getElementById('sync-status').innerText = "受信エラーが発生しました"; 
+            statusEl.innerText = "受信エラーが発生しました。一度「クラウドに保存」を行ってから再度お試しください。"; 
             console.error(e);
         }
     }
@@ -400,7 +399,10 @@
 
     container.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) { isDragging = true; startX = e.touches.clientX - posX; startY = e.touches.clientY - posY; } 
-        else if (e.touches.length === 2) { isDragging = false; startDist = getDistance(e.touches, e.touches); }
+        else if (e.touches.length === 2) {
+            isDragging = false;
+            startDist = getDistance(e.touches, e.touches);
+        }
     }, { passive: true });
     container.addEventListener('touchmove', (e) => {
         if (isDragging && e.touches.length === 1) { posX = e.touches.clientX - startX; posY = e.touches.clientY - startY; updateTransform(); } 
