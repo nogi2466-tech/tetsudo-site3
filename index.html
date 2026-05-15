@@ -6,12 +6,14 @@
     <title>tetsudo-site</title>
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
+        /* カテゴリーカラーの設定 */
         :root { 
             --color-keio: #ff0080; 
             --color-jr: #008000; 
             --color-private: #f39c12; 
             --color-others: #6c757d; 
             --color-docs: #ffc107; 
+            --color-gallery: #17a2b8; /* 画像項目の色（水色） */
         }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
@@ -32,6 +34,7 @@
         .card-private { border-left-color: var(--color-private); }
         .card-others { border-left-color: var(--color-others); }
         .card-docs { border-left-color: var(--color-docs); }
+        .card-gallery { border-left-color: var(--color-gallery); }
 
         .link-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .cat-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; white-space: nowrap; }
@@ -40,12 +43,14 @@
         .badge-private { background: var(--color-private); }
         .badge-docs { background: var(--color-docs); color: #333; }
         .badge-others { background: var(--color-others); }
-        .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
+        .badge-gallery { background: var(--color-gallery); }
         
-        /* 画像表示エリアのスタイル */
-        .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; }
+        /* タイトル記述用のスタイル変更 */
+        .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
+        .link-title.no-link { color: #333; cursor: default; } /* URLがない場合は黒文字 */
+        
+        .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 300px; background: #eee; display: flex; align-items: center; justify-content: center; }
         .link-img { width: 100%; height: 100%; object-fit: cover; }
-
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
         .action-btns { margin-top: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 15px; }
@@ -57,7 +62,6 @@
         .btn-blue { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
         
-        /* 画像プレビュー用 */
         .preview-area { margin-bottom: 12px; text-align: center; }
         .preview-img { max-width: 100%; max-height: 150px; border-radius: 8px; display: none; }
     </style>
@@ -73,6 +77,7 @@
     <button class="nav-btn" onclick="showSection('private', this)">大手私鉄</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
+    <button class="nav-btn" onclick="showSection('gallery', this)">画像</button>
     <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
@@ -104,11 +109,11 @@
                     <option value="private">大手私鉄</option>
                     <option value="others">その他</option>
                     <option value="docs">資料</option>
+                    <option value="gallery">画像</option>
                 </select>
                 <input type="text" id="new-title" placeholder="タイトル">
-                <input type="url" id="new-url" placeholder="URL">
+                <input type="url" id="new-url" placeholder="URL（画像カテゴリーの場合は空欄可）">
                 
-                <!-- 画像アップロード枠 -->
                 <p style="font-size: 0.85rem; color: #666; margin: 0 0 5px 0;">画像を追加（任意）</p>
                 <input type="file" id="new-img" accept="image/*" onchange="previewFile()">
                 <div class="preview-area">
@@ -127,13 +132,13 @@
 </div>
 
 <script>
-    const GAS_URL = "[https://google.com](https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec)";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
     const MASTER_PASS = "0829"; 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
     let currentFilter = 'all';
-    let currentImageData = ""; // 画像データの一時保管用
-    const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他" };
+    let currentImageData = ""; 
+    const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他", gallery: "画像" };
 
     function showSection(cat, btn) {
         currentFilter = cat;
@@ -156,7 +161,8 @@
 
         let displayList = links
             .filter(item => {
-                const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
+                // 「すべて」のときは、資料(docs)と画像(gallery)以外を表示
+                const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs' && item.cat !== 'gallery') : (item.cat === currentFilter);
                 const matchWord = item.title.toLowerCase().includes(keyword);
                 return matchCat && matchWord;
             })
@@ -164,10 +170,16 @@
 
         displayList.forEach((item) => {
             const originalIndex = links.indexOf(item);
+            
+            // URLがある場合はリンク付き、ない場合はただのテキストとしてタイトルを出力
+            const titleHtml = item.url 
+                ? `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`
+                : `<span class="link-title no-link">${item.title}</span>`;
+
             list.innerHTML += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
-                    <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
+                    ${titleHtml}
                 </div>
                 ${item.img ? `<div class="link-img-wrap"><img src="${item.img}" class="link-img"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
@@ -189,7 +201,6 @@
         } else { alert('パスワードが違います'); }
     }
 
-    // 画像選択時のプレビューとリサイズ処理
     function previewFile() {
         const file = document.getElementById('new-img').files[0];
         if (!file) return;
@@ -198,7 +209,6 @@
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                // 容量節約のため最大幅600pxにリサイズ
                 const maxW = 600;
                 const canvas = document.createElement('canvas');
                 const scale = Math.min(maxW / img.width, 1);
@@ -208,7 +218,7 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                currentImageData = canvas.toDataURL('image/jpeg', 0.7); // 画質70%のJPEGにして軽量化
+                currentImageData = canvas.toDataURL('image/jpeg', 0.7); 
                 
                 const pImg = document.getElementById('form-preview');
                 pImg.src = currentImageData;
@@ -234,7 +244,7 @@
         document.getElementById('edit-index').value = index;
         document.getElementById('new-cat').value = item.cat;
         document.getElementById('new-title').value = item.title;
-        document.getElementById('new-url').value = item.url;
+        document.getElementById('new-url').value = item.url || '';
         document.getElementById('new-desc').value = item.desc || '';
         
         if(item.img) {
@@ -270,9 +280,12 @@
         const url = document.getElementById('new-url').value;
         const cat = document.getElementById('new-cat').value;
         const desc = document.getElementById('new-desc').value;
-        if(!title || !url) return alert('入力してください');
+
+        // バリデーション：画像カテゴリーならURLは空でもOK、それ以外は必須
+        if(!title) return alert('タイトルを入力してください');
+        if(cat !== 'gallery' && !url) return alert('URLを入力してください');
         
-        const newItem = { title, url, desc, cat, img: currentImageData };
+        const newItem = { title, url: (cat === 'gallery' ? url : url), desc, cat, img: currentImageData };
         
         if (index === -1) { links.push(newItem); alert('追加しました'); }
         else { links[index] = newItem; alert('修正しました'); }
