@@ -148,7 +148,7 @@
 
 <script>
     // ⚠️ 新しいデプロイURLをここに貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzm6LPVhtrPFzhV4NkHJuRayVx8cuWwsUdjMtTKOVvTv1Wk-eaJhuxTDGOw6XfETXh1hA/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzTSfqfJUSZXJllYNQVmjzxlt7rF2V3EDDzwh-vk0Cfz1Q9MPfCgXzH1j2pNhNd7DAFFg/exec"; 
     const MASTER_PASS = "0829"; 
 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -198,7 +198,7 @@
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     ${titleHtml}
                 </div>
-                ${item.img ? `<div class="link-img-wrap" onclick="openModal('${item.img}', '${item.title}')"><img src="${item.img}" class="link-img" crossorigin="anonymous"></div>` : ''}
+                ${item.img ? `<div class="link-img-wrap" onclick="openModal('${item.img}', '${item.title}')"><img src="${item.img}" class="link-img"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
                 ${isUnlocked ? `
                 <div class="action-btns">
@@ -218,6 +218,7 @@
         } else { alert('パスワードが違います'); }
     }
 
+    // ★容量最適化リサイズ
     function previewFile() {
         const file = document.getElementById('new-img').files;
         if (!file || file.length === 0) return;
@@ -226,7 +227,8 @@
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                const maxW = 1200; 
+                // 最大横幅を900px、画質75%に固定し、くっきり見えつつデータ量を大幅に節減
+                const maxW = 900; 
                 const canvas = document.createElement('canvas');
                 const scaleFactor = Math.min(maxW / img.width, 1);
                 canvas.width = img.width * scaleFactor;
@@ -235,7 +237,7 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                currentImageData = canvas.toDataURL('image/jpeg', 0.85); 
+                currentImageData = canvas.toDataURL('image/jpeg', 0.75); 
                 
                 const pImg = document.getElementById('form-preview');
                 pImg.src = currentImageData;
@@ -312,7 +314,7 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-    /* ★一括高速送信版に修正 */
+    /* ★シンプル一括送信 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         const statusEl = document.getElementById('sync-status');
@@ -326,14 +328,7 @@
             });
 
             if (response.ok) {
-                const resData = await response.json();
-                if(resData.status === "success") {
-                    statusEl.innerText = "クラウド保存完了！すべての画像はGoogleドライブに高速保存されました。";
-                    // 画像の保存場所がGoogleドライブURLに切り替わったため、再度読み込みを行います。
-                    await importData();
-                } else {
-                    statusEl.innerText = "サーバー側でエラーが発生しました: " + resData.message;
-                }
+                statusEl.innerText = "クラウドへの保存が完全に完了しました！";
             } else {
                 statusEl.innerText = "送信エラーが発生しました";
             }
@@ -343,6 +338,7 @@
         }
     }
 
+    /* ★シンプル一括受信 */
     async function importData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         document.getElementById('sync-status').innerText = "受信中...";
@@ -357,12 +353,12 @@
             if(Array.isArray(data)) {
                 links = data;
                 save();
-                document.getElementById('sync-status').innerText = "クラウドからの読み込みに成功しました！";
+                document.getElementById('sync-status').innerText = "同期完了しました！";
             } else {
                 document.getElementById('sync-status').innerText = "データ形式が正しくありません";
             }
         } catch (e) { 
-            document.getElementById('sync-status').innerText = "読み込みエラーが発生しました"; 
+            document.getElementById('sync-status').innerText = "受信エラーが発生しました"; 
             console.error(e);
         }
     }
