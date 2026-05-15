@@ -148,7 +148,7 @@
 
 <script>
     // ⚠️ 新しいデプロイURLをここに貼り付けてください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxBu_Y-RkAZt1SfcMDIrIX4NTroLNE9ho-bXQdCCsnENxdD8mzf-nw-Eo3UXZUChVFtpA/exec"; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzm6LPVhtrPFzhV4NkHJuRayVx8cuWwsUdjMtTKOVvTv1Wk-eaJhuxTDGOw6XfETXh1hA/exec"; 
     const MASTER_PASS = "0829"; 
 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -198,7 +198,7 @@
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     ${titleHtml}
                 </div>
-                ${item.img ? `<div class="link-img-wrap" onclick="openModal('${item.img}', '${item.title}')"><img src="${item.img}" class="link-img"></div>` : ''}
+                ${item.img ? `<div class="link-img-wrap" onclick="openModal('${item.img}', '${item.title}')"><img src="${item.img}" class="link-img" crossorigin="anonymous"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
                 ${isUnlocked ? `
                 <div class="action-btns">
@@ -312,41 +312,33 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-    /* ★改良版：高画質・大容量データ対応の分割送信（アップロード）関数 */
+    /* ★一括高速送信版に修正 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         const statusEl = document.getElementById('sync-status');
-        statusEl.innerText = "送信データを準備中...";
+        statusEl.innerText = "クラウドに送信中...";
         
         try {
-            const rawString = JSON.stringify(links);
-            // 1回あたりの送信サイズを約100KB（100,000文字）に制限して細切れにする
-            const chunkSize = 100000; 
-            const totalParts = Math.ceil(rawString.length / chunkSize);
-            
-            for (let i = 0; i < totalParts; i++) {
-                statusEl.innerText = `送信中... (${i + 1} / ${totalParts} 通目をアップロード)`;
-                
-                const chunk = rawString.substring(i * chunkSize, (i + 1) * chunkSize);
-                const payload = {
-                    part: i,
-                    total: totalParts,
-                    data: chunk
-                };
+            const response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify(links),
+                headers: { "Content-Type": "text/plain" }
+            });
 
-                const response = await fetch(GAS_URL, { 
-                    method: "POST", 
-                    body: JSON.stringify(payload),
-                    headers: { "Content-Type": "text/plain" }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`${i + 1}通目の送信でサーバーエラーが発生しました`);
+            if (response.ok) {
+                const resData = await response.json();
+                if(resData.status === "success") {
+                    statusEl.innerText = "クラウド保存完了！すべての画像はGoogleドライブに高速保存されました。";
+                    // 画像の保存場所がGoogleドライブURLに切り替わったため、再度読み込みを行います。
+                    await importData();
+                } else {
+                    statusEl.innerText = "サーバー側でエラーが発生しました: " + resData.message;
                 }
+            } else {
+                statusEl.innerText = "送信エラーが発生しました";
             }
-            statusEl.innerText = "クラウド保存完了！すべての高画質画像が保存されました。";
         } catch (e) { 
-            statusEl.innerText = "容量超過または通信エラーが発生しました"; 
+            statusEl.innerText = "通信エラーが発生しました"; 
             console.error(e);
         }
     }
