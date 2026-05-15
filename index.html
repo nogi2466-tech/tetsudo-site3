@@ -45,7 +45,6 @@
         .badge-gallery { background: var(--color-gallery); }
         
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
-        /* 画像カテゴリー用：タイトルを押せるようにポインタを変更し、色を青（リンク色）に統一 */
         .link-title.no-link { color: var(--blue); cursor: pointer; } 
         
         .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 300px; background: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -122,8 +121,8 @@
                 <input type="text" id="new-title" placeholder="タイトル">
                 <input type="url" id="new-url" placeholder="URL（画像カテゴリーの場合は空欄可）">
                 
-                <p style="font-size: 0.85rem; color: #666; margin: 0 0 5px 0;">画像を追加（任意）</p>
-                <input type="file" id="new-img" accept="image/*" onchange="previewFile()">
+                <p style="font-size: 0.85rem; color: #666; margin: 0 0 5px 0;" id="upload-status-text">画像を追加（任意）</p>
+                <input type="file" id="new-img" accept="image/*" onchange="previewAndUploadFile()">
                 <div class="preview-area">
                     <img id="form-preview" class="preview-img" src="" alt="プレビュー">
                     <button id="del-img-btn" class="delete-btn" style="display:none; float:none; margin-top:5px;" onclick="clearImageInput()">画像を消去</button>
@@ -148,8 +147,9 @@
 </div>
 
 <script>
-    // ⚠️ お使いのGASの「ウェブアプリURL」をここに貼り付けて保存してください
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzOxyahOZIvjQ_J2TA7M_lNlGaOEf30jtLF_no-16MERQN5UU6WAcUSAa1omfDJ1xPqcA/exec"; 
+    // ⚠️【必須変更箇所】
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzOxyahOZIvjQ_J2TA7M_lNlGaOEf30jtLF_no-16MERQN5UU6WAcUSAa1omfDJ1xPqcA/exec"; // あなたのウェブアプリURL
+    const IMGBB_API_KEY = "ここに取得したAPIキーを貼り付け"; // ImGBBで取得したAPIキー
     const MASTER_PASS = "0829"; 
 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -191,7 +191,6 @@
         displayList.forEach((item) => {
             const originalIndex = links.indexOf(item);
             
-            // ★URLがあれば通常リンク、画像カテゴリーかつ画像があれば文字クリックでプレビュー開くよう設定
             let titleHtml = "";
             if (item.url) {
                 titleHtml = `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`;
@@ -226,33 +225,48 @@
         } else { alert('パスワードが違います'); }
     }
 
-    function previewFile() {
-        const file = document.getElementById('new-img').files;
-        if (!file || file.length === 0) return;
+    // ★画像選択時に超高速でネット上のURLに自動変換する処理
+    async function previewAndUploadFile() {
+        const fileInput = document.getElementById('new-img');
+        const files = fileInput.files;
+        if (!files || files.length === 0) return;
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const img = new Image();
-            img.onload = function() {
-                const maxW = 900; 
-                const canvas = document.createElement('canvas');
-                const scaleFactor = Math.min(maxW / img.width, 1);
-                canvas.width = img.width * scaleFactor;
-                canvas.height = img.height * scaleFactor;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                currentImageData = canvas.toDataURL('image/jpeg', 0.75); 
+        const statusText = document.getElementById('upload-status-text');
+        statusText.innerText = "⏳ 画像をネットURLに高速変換中...";
+        statusText.style.color = "var(--blue)";
+
+        const file = files[0];
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            // ImgBBの無料高速APIを叩く
+            const response = await fetch(`https://imgbb.com{IMGBB_API_KEY}`, {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // 画質を落とさず、ネット上の正規URL(https://ibb.co...)を直接取得
+                currentImageData = result.data.url; 
                 
                 const pImg = document.getElementById('form-preview');
                 pImg.src = currentImageData;
                 pImg.style.display = 'inline-block';
                 document.getElementById('del-img-btn').style.display = 'inline-block';
+                
+                statusText.innerText = "✅ 画像のURL変換に成功しました！";
+                statusText.style.color = "var(--green)";
+            } else {
+                throw new Error("アップロード失敗");
             }
-            img.src = e.target.result;
+        } catch (error) {
+            alert("画像の変換に失敗しました。APIキーが正しいか確認してください。");
+            statusText.innerText = "❌ 変換エラー。再度選択してください。";
+            statusText.style.color = "#ff4444";
+            clearImageInput();
         }
-        reader.readAsDataURL(file);
     }
 
     function clearImageInput() {
@@ -262,6 +276,8 @@
         pImg.style.display = 'none';
         document.getElementById('del-img-btn').style.display = 'none';
         currentImageData = "";
+        document.getElementById('upload-status-text').innerText = "画像を追加（任意）";
+        document.getElementById('upload-status-text').style.color = "#666";
     }
 
     function startEdit(index) {
@@ -278,6 +294,8 @@
             pImg.src = item.img;
             pImg.style.display = 'inline-block';
             document.getElementById('del-img-btn').style.display = 'inline-block';
+            document.getElementById('upload-status-text').innerText = "✅ 既存の画像がセットされています";
+            document.getElementById('upload-status-text').style.color = "var(--green)";
         } else {
             clearImageInput();
         }
@@ -333,7 +351,7 @@
             });
 
             if (response.ok) {
-                statusEl.innerText = "クラウドへの保存が完了しました！";
+                statusEl.innerText = "クラウドへの保存が完全に完了しました！";
             } else {
                 statusEl.innerText = "送信エラーが発生しました";
             }
@@ -360,7 +378,7 @@
                 save();
                 statusEl.innerText = "同期（読み込み）完了しました！";
             } else {
-                statusEl.innerText = "データがまだ登録されていないか、形式が正しくありません";
+                statusEl.innerText = "データ形式が正しくありません";
             }
         } catch (e) { 
             statusEl.innerText = "受信エラーが発生しました。一度「クラウドに保存」を行ってから再度お試しください。"; 
@@ -405,10 +423,7 @@
 
     container.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) { isDragging = true; startX = e.touches.clientX - posX; startY = e.touches.clientY - posY; } 
-        else if (e.touches.length === 2) {
-            isDragging = false;
-            startDist = getDistance(e.touches, e.touches);
-        }
+        else if (e.touches.length === 2) { isDragging = false; startDist = getDistance(e.touches, e.touches); }
     }, { passive: true });
     container.addEventListener('touchmove', (e) => {
         if (isDragging && e.touches.length === 1) { posX = e.touches.clientX - startX; posY = e.touches.clientY - startY; updateTransform(); } 
