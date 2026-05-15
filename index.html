@@ -45,7 +45,8 @@
         .badge-gallery { background: var(--color-gallery); }
         
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
-        .link-title.no-link { color: #333; cursor: default; }
+        /* 画像カテゴリー用：タイトルを押せるようにポインタを変更し、色を青（リンク色）に統一 */
+        .link-title.no-link { color: var(--blue); cursor: pointer; } 
         
         .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 300px; background: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .link-img { width: 100%; height: 100%; object-fit: cover; }
@@ -147,7 +148,7 @@
 </div>
 
 <script>
-    // ⚠️ 新しくデプロイした「ウェブアプリのURL」をここに貼り付けてください
+    // ⚠️ お使いのGASの「ウェブアプリURL」をここに貼り付けて保存してください
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzOxyahOZIvjQ_J2TA7M_lNlGaOEf30jtLF_no-16MERQN5UU6WAcUSAa1omfDJ1xPqcA/exec"; 
     const MASTER_PASS = "0829"; 
 
@@ -189,9 +190,16 @@
 
         displayList.forEach((item) => {
             const originalIndex = links.indexOf(item);
-            const titleHtml = item.url 
-                ? `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`
-                : `<span class="link-title no-link">${item.title}</span>`;
+            
+            // ★URLがあれば通常リンク、画像カテゴリーかつ画像があれば文字クリックでプレビュー開くよう設定
+            let titleHtml = "";
+            if (item.url) {
+                titleHtml = `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`;
+            } else if (item.cat === 'gallery' && item.img) {
+                titleHtml = `<span class="link-title no-link" onclick="openModal('${item.img}', '${item.title}')">${item.title}</span>`;
+            } else {
+                titleHtml = `<span class="link-title no-link">${item.title}</span>`;
+            }
 
             list.innerHTML += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
@@ -312,7 +320,6 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-    /* 送信関数 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         const statusEl = document.getElementById('sync-status');
@@ -336,7 +343,6 @@
         }
     }
 
-    /* 受信関数（大容量対応） */
     async function importData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         const statusEl = document.getElementById('sync-status');
