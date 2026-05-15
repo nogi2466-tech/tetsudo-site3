@@ -147,7 +147,8 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec"; 
+    // ⚠️ 新しいデプロイURLをここに貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxBu_Y-RkAZt1SfcMDIrIX4NTroLNE9ho-bXQdCCsnENxdD8mzf-nw-Eo3UXZUChVFtpA/exec"; 
     const MASTER_PASS = "0829"; 
 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -217,7 +218,6 @@
         } else { alert('パスワードが違います'); }
     }
 
-    // ★高画質リサイズ処理
     function previewFile() {
         const file = document.getElementById('new-img').files;
         if (!file || file.length === 0) return;
@@ -226,7 +226,6 @@
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                // 最大解像度を1200pxに大幅に引き上げ
                 const maxW = 1200; 
                 const canvas = document.createElement('canvas');
                 const scaleFactor = Math.min(maxW / img.width, 1);
@@ -236,7 +235,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                // 保存圧縮画質を85%に高画質化
                 currentImageData = canvas.toDataURL('image/jpeg', 0.85); 
                 
                 const pImg = document.getElementById('form-preview');
@@ -246,7 +244,7 @@
             }
             img.src = e.target.result;
         }
-        reader.readAsDataURL(file[0]);
+        reader.readAsDataURL(file);
     }
 
     function clearImageInput() {
@@ -314,22 +312,41 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
+    /* ★改良版：高画質・大容量データ対応の分割送信（アップロード）関数 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
-        document.getElementById('sync-status').innerText = "送信中...";
+        const statusEl = document.getElementById('sync-status');
+        statusEl.innerText = "送信データを準備中...";
+        
         try {
-            const response = await fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify(links),
-                headers: { "Content-Type": "text/plain" }
-            });
-            if (response.ok) {
-                document.getElementById('sync-status').innerText = "クラウド保存完了！";
-            } else {
-                document.getElementById('sync-status').innerText = "送信エラーが発生しました";
+            const rawString = JSON.stringify(links);
+            // 1回あたりの送信サイズを約100KB（100,000文字）に制限して細切れにする
+            const chunkSize = 100000; 
+            const totalParts = Math.ceil(rawString.length / chunkSize);
+            
+            for (let i = 0; i < totalParts; i++) {
+                statusEl.innerText = `送信中... (${i + 1} / ${totalParts} 通目をアップロード)`;
+                
+                const chunk = rawString.substring(i * chunkSize, (i + 1) * chunkSize);
+                const payload = {
+                    part: i,
+                    total: totalParts,
+                    data: chunk
+                };
+
+                const response = await fetch(GAS_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify(payload),
+                    headers: { "Content-Type": "text/plain" }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`${i + 1}通目の送信でサーバーエラーが発生しました`);
+                }
             }
+            statusEl.innerText = "クラウド保存完了！すべての高画質画像が保存されました。";
         } catch (e) { 
-            document.getElementById('sync-status').innerText = "通信エラーが発生しました"; 
+            statusEl.innerText = "容量超過または通信エラーが発生しました"; 
             console.error(e);
         }
     }
@@ -394,13 +411,13 @@
     window.addEventListener('mouseup', () => { isDragging = false; });
 
     container.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - posX; startY = e.touches[0].clientY - posY; } 
-        else if (e.touches.length === 2) { isDragging = false; startDist = getDistance(e.touches[0], e.touches[1]); }
+        if (e.touches.length === 1) { isDragging = true; startX = e.touches.clientX - posX; startY = e.touches.clientY - posY; } 
+        else if (e.touches.length === 2) { isDragging = false; startDist = getDistance(e.touches, e.touches); }
     }, { passive: true });
     container.addEventListener('touchmove', (e) => {
-        if (isDragging && e.touches.length === 1) { posX = e.touches[0].clientX - startX; posY = e.touches[0].clientY - startY; updateTransform(); } 
+        if (isDragging && e.touches.length === 1) { posX = e.touches.clientX - startX; posY = e.touches.clientY - startY; updateTransform(); } 
         else if (e.touches.length === 2) {
-            const dist = getDistance(e.touches[0], e.touches[1]); const factor = dist / startDist; startDist = dist;
+            const dist = getDistance(e.touches, e.touches); const factor = dist / startDist; startDist = dist;
             scale = Math.min(Math.max(scale * factor, 0.5), 5); updateTransform();
         }
     }, { passive: true });
