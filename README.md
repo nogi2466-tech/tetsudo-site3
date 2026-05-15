@@ -147,7 +147,6 @@
 </div>
 
 <script>
-    // ⚠️【最重要】ここに新しくデプロイしたウェブアプリのURLを貼り付けてください
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec"; 
     const MASTER_PASS = "0829"; 
 
@@ -218,16 +217,17 @@
         } else { alert('パスワードが違います'); }
     }
 
+    // ★高画質リサイズ処理
     function previewFile() {
-        const file = document.getElementById('new-img').files[0];
-        if (!file) return;
+        const file = document.getElementById('new-img').files;
+        if (!file || file.length === 0) return;
 
         const reader = new FileReader();
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                // クラウド送信容量制限の超過を防ぐため最大幅500pxに最適化
-                const maxW = 500; 
+                // 最大解像度を1200pxに大幅に引き上げ
+                const maxW = 1200; 
                 const canvas = document.createElement('canvas');
                 const scaleFactor = Math.min(maxW / img.width, 1);
                 canvas.width = img.width * scaleFactor;
@@ -236,7 +236,8 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                currentImageData = canvas.toDataURL('image/jpeg', 0.65); // 容量を考慮し画質を65%に調整
+                // 保存圧縮画質を85%に高画質化
+                currentImageData = canvas.toDataURL('image/jpeg', 0.85); 
                 
                 const pImg = document.getElementById('form-preview');
                 pImg.src = currentImageData;
@@ -245,7 +246,7 @@
             }
             img.src = e.target.result;
         }
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(file[0]);
     }
 
     function clearImageInput() {
@@ -313,12 +314,10 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-    /* 改良版：クラウド同期（送信）関数 */
     async function exportData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         document.getElementById('sync-status').innerText = "送信中...";
         try {
-            // content-typeを指定せずtext/plainで送りCORS制限を回避
             const response = await fetch(GAS_URL, { 
                 method: "POST", 
                 body: JSON.stringify(links),
@@ -335,12 +334,10 @@
         }
     }
 
-    /* 改良版：クラウド同期（受信）関数 */
     async function importData() {
         if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         document.getElementById('sync-status').innerText = "受信中...";
         try {
-            // redirect: "follow" を追加してGAS固有の転送エラーを回避
             const res = await fetch(GAS_URL, { 
                 method: "GET",
                 redirect: "follow"
