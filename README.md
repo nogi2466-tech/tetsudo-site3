@@ -6,14 +6,13 @@
     <title>tetsudo-site</title>
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
-        /* カテゴリーカラーの設定 */
         :root { 
             --color-keio: #ff0080; 
             --color-jr: #008000; 
             --color-private: #f39c12; 
             --color-others: #6c757d; 
             --color-docs: #ffc107; 
-            --color-gallery: #17a2b8; /* 画像項目の色（水色） */
+            --color-gallery: #17a2b8; 
         }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
@@ -45,11 +44,10 @@
         .badge-others { background: var(--color-others); }
         .badge-gallery { background: var(--color-gallery); }
         
-        /* タイトル記述用のスタイル変更 */
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
-        .link-title.no-link { color: #333; cursor: default; } /* URLがない場合は黒文字 */
+        .link-title.no-link { color: #333; cursor: default; }
         
-        .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 300px; background: #eee; display: flex; align-items: center; justify-content: center; }
+        .link-img-wrap { margin-top: 10px; border-radius: 8px; overflow: hidden; max-height: 300px; background: #eee; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .link-img { width: 100%; height: 100%; object-fit: cover; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
@@ -64,6 +62,15 @@
         
         .preview-area { margin-bottom: 12px; text-align: center; }
         .preview-img { max-width: 100%; max-height: 150px; border-radius: 8px; display: none; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow: hidden; touch-action: none; user-select: none; }
+        .modal-img-container { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+        .modal-img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.1s ease-out; cursor: grab; transform-origin: center center; }
+        .modal-img:active { cursor: grabbing; }
+        
+        .modal-close { position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 15px; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; z-index: 1001; }
+        .modal-download { position: absolute; top: 15px; right: 15px; background: var(--blue); color: white; border: none; padding: 10px 15px; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; z-index: 1001; text-decoration: none; }
+        #sync-status { text-align: center; font-size: 0.9rem; color: var(--blue); margin-top: 15px; font-weight: bold; min-height: 1.5em; }
     </style>
 </head>
 <body>
@@ -126,19 +133,32 @@
                 <button class="btn-blue" id="cancel-edit-btn" style="background:#666; margin-top:10px; display:none;" onclick="resetForm()">キャンセル</button>
                 <button class="btn-blue" id="export-btn" style="background:#666; margin-top:10px;" onclick="exportData()">クラウドに保存 (送信)</button>
             </div>
-            <p id="sync-status" style="text-align:center; font-size:0.85rem; color:var(--blue); margin-top:15px; font-weight:bold;"></p>
+            <p id="sync-status"></p>
         </div>
     </div>
 </div>
 
+<div id="image-modal" class="modal-overlay">
+    <button class="modal-close" onclick="closeModal()">閉じる</button>
+    <a id="modal-download-link" class="modal-download" download="tetsudo-image.jpg">保存</a>
+    <div class="modal-img-container" id="modal-container">
+        <img id="modal-target-img" class="modal-img" src="" alt="拡大画像">
+    </div>
+</div>
+
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
+    // ⚠️【最重要】ここに新しくデプロイしたウェブアプリのURLを貼り付けてください
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec"; 
     const MASTER_PASS = "0829"; 
+
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
     let currentFilter = 'all';
     let currentImageData = ""; 
     const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他", gallery: "画像" };
+
+    let scale = 1, posX = 0, posY = 0, startX = 0, startY = 0, isDragging = false;
+    let startDist = 0;
 
     function showSection(cat, btn) {
         currentFilter = cat;
@@ -161,7 +181,6 @@
 
         let displayList = links
             .filter(item => {
-                // 「すべて」のときは、資料(docs)と画像(gallery)以外を表示
                 const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs' && item.cat !== 'gallery') : (item.cat === currentFilter);
                 const matchWord = item.title.toLowerCase().includes(keyword);
                 return matchCat && matchWord;
@@ -170,8 +189,6 @@
 
         displayList.forEach((item) => {
             const originalIndex = links.indexOf(item);
-            
-            // URLがある場合はリンク付き、ない場合はただのテキストとしてタイトルを出力
             const titleHtml = item.url 
                 ? `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`
                 : `<span class="link-title no-link">${item.title}</span>`;
@@ -181,7 +198,7 @@
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     ${titleHtml}
                 </div>
-                ${item.img ? `<div class="link-img-wrap"><img src="${item.img}" class="link-img"></div>` : ''}
+                ${item.img ? `<div class="link-img-wrap" onclick="openModal('${item.img}', '${item.title}')"><img src="${item.img}" class="link-img"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
                 ${isUnlocked ? `
                 <div class="action-btns">
@@ -209,16 +226,17 @@
         reader.onload = function (e) {
             const img = new Image();
             img.onload = function() {
-                const maxW = 600;
+                // クラウド送信容量制限の超過を防ぐため最大幅500pxに最適化
+                const maxW = 500; 
                 const canvas = document.createElement('canvas');
-                const scale = Math.min(maxW / img.width, 1);
-                canvas.width = img.width * scale;
-                canvas.height = img.height * scale;
+                const scaleFactor = Math.min(maxW / img.width, 1);
+                canvas.width = img.width * scaleFactor;
+                canvas.height = img.height * scaleFactor;
                 
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                currentImageData = canvas.toDataURL('image/jpeg', 0.7); 
+                currentImageData = canvas.toDataURL('image/jpeg', 0.65); // 容量を考慮し画質を65%に調整
                 
                 const pImg = document.getElementById('form-preview');
                 pImg.src = currentImageData;
@@ -281,11 +299,10 @@
         const cat = document.getElementById('new-cat').value;
         const desc = document.getElementById('new-desc').value;
 
-        // バリデーション：画像カテゴリーならURLは空でもOK、それ以外は必須
         if(!title) return alert('タイトルを入力してください');
         if(cat !== 'gallery' && !url) return alert('URLを入力してください');
         
-        const newItem = { title, url: (cat === 'gallery' ? url : url), desc, cat, img: currentImageData };
+        const newItem = { title, url, desc, cat, img: currentImageData };
         
         if (index === -1) { links.push(newItem); alert('追加しました'); }
         else { links[index] = newItem; alert('修正しました'); }
@@ -296,23 +313,102 @@
     function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
     function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
+    /* 改良版：クラウド同期（送信）関数 */
     async function exportData() {
+        if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         document.getElementById('sync-status').innerText = "送信中...";
         try {
-            await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(links) });
-            document.getElementById('sync-status').innerText = "クラウド保存完了！";
-        } catch (e) { document.getElementById('sync-status').innerText = "送信エラー"; }
+            // content-typeを指定せずtext/plainで送りCORS制限を回避
+            const response = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify(links),
+                headers: { "Content-Type": "text/plain" }
+            });
+            if (response.ok) {
+                document.getElementById('sync-status').innerText = "クラウド保存完了！";
+            } else {
+                document.getElementById('sync-status').innerText = "送信エラーが発生しました";
+            }
+        } catch (e) { 
+            document.getElementById('sync-status').innerText = "通信エラーが発生しました"; 
+            console.error(e);
+        }
     }
 
+    /* 改良版：クラウド同期（受信）関数 */
     async function importData() {
+        if(GAS_URL.includes("...")) return alert("先に正しいGAS_URLを設定してください");
         document.getElementById('sync-status').innerText = "受信中...";
         try {
-            const res = await fetch(GAS_URL);
-            links = await res.json();
-            save();
-            document.getElementById('sync-status').innerText = "同期完了しました！";
-        } catch (e) { document.getElementById('sync-status').innerText = "受信エラー"; }
+            // redirect: "follow" を追加してGAS固有の転送エラーを回避
+            const res = await fetch(GAS_URL, { 
+                method: "GET",
+                redirect: "follow"
+            });
+            if (!res.ok) throw new Error("応答データが異常です");
+            
+            const data = await res.json();
+            if(Array.isArray(data)) {
+                links = data;
+                save();
+                document.getElementById('sync-status').innerText = "クラウドからの読み込みに成功しました！";
+            } else {
+                document.getElementById('sync-status').innerText = "データ形式が正しくありません";
+            }
+        } catch (e) { 
+            document.getElementById('sync-status').innerText = "読み込みエラーが発生しました"; 
+            console.error(e);
+        }
     }
+
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-target-img');
+    const dlLink = document.getElementById('modal-download-link');
+
+    function openModal(imgSrc, title) {
+        scale = 1; posX = 0; posY = 0;
+        modalImg.src = imgSrc;
+        dlLink.href = imgSrc;
+        dlLink.download = `${title}.jpg`;
+        updateTransform();
+        modal.style.display = "block";
+    }
+
+    function closeModal() { modal.style.display = "none"; }
+    function updateTransform() { modalImg.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
+
+    modal.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = 0.1;
+        if (e.deltaY < 0) { scale = Math.min(scale + zoomFactor, 5); } 
+        else { scale = Math.max(scale - zoomFactor, 0.5); }
+        updateTransform();
+    }, { passive: false });
+
+    const container = document.getElementById('modal-container');
+    function getDistance(t1, t2) { return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY); }
+
+    container.addEventListener('mousedown', (e) => {
+        if(e.target === modalImg) { isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY; }
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return; posX = e.clientX - startX; posY = e.clientY - startY; updateTransform();
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - posX; startY = e.touches[0].clientY - posY; } 
+        else if (e.touches.length === 2) { isDragging = false; startDist = getDistance(e.touches[0], e.touches[1]); }
+    }, { passive: true });
+    container.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) { posX = e.touches[0].clientX - startX; posY = e.touches[0].clientY - startY; updateTransform(); } 
+        else if (e.touches.length === 2) {
+            const dist = getDistance(e.touches[0], e.touches[1]); const factor = dist / startDist; startDist = dist;
+            scale = Math.min(Math.max(scale * factor, 0.5), 5); updateTransform();
+        }
+    }, { passive: true });
+    container.addEventListener('touchend', () => { isDragging = false; });
+
     renderWithSearch();
 </script>
 </body>
