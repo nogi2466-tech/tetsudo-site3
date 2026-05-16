@@ -10,9 +10,10 @@
         :root { 
             --color-keio: #ff0080; 
             --color-jr: #008000; 
-            --color-private: #f39c12; /* 大手私鉄の色 */
+            --color-private: #f39c12; 
             --color-others: #6c757d; 
             --color-docs: #ffc107; 
+            --color-images: #17a2b8; /* 画像カテゴリーの色 */
         }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
@@ -33,6 +34,7 @@
         .card-private { border-left-color: var(--color-private); }
         .card-others { border-left-color: var(--color-others); }
         .card-docs { border-left-color: var(--color-docs); }
+        .card-images { border-left-color: var(--color-images); }
 
         .link-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .cat-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; white-space: nowrap; }
@@ -40,10 +42,16 @@
         .badge-jr { background: var(--color-jr); }
         .badge-private { background: var(--color-private); }
         .badge-docs { background: var(--color-docs); color: #333; }
+        .badge-images { background: var(--color-images); }
         .badge-others { background: var(--color-others); }
+        
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
+        /* 画像表示エリアのスタイル調整（画像幅をいっぱいにして見やすく） */
+        .link-img-wrap { margin-top: 12px; max-width: 100%; text-align: center; background: #eaeaea; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+        .link-img { max-width: 100%; max-height: 300px; object-fit: contain; display: block; margin: 0 auto; }
+
         .action-btns { margin-top: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 15px; }
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .edit-btn { color: var(--blue); border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
@@ -65,6 +73,7 @@
     <button class="nav-btn" onclick="showSection('private', this)">大手私鉄</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
+    <button class="nav-btn" onclick="showSection('images', this)">画像</button>
     <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
@@ -96,9 +105,10 @@
                     <option value="private">大手私鉄</option>
                     <option value="others">その他</option>
                     <option value="docs">資料</option>
+                    <option value="images">画像</option>
                 </select>
                 <input type="text" id="new-title" placeholder="タイトル">
-                <input type="url" id="new-url" placeholder="URL">
+                <input type="url" id="new-url" placeholder="URL (画像カテゴリーの場合は画像のURL)">
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
                 <button class="btn-blue" id="add-update-btn" onclick="addOrUpdateLink()">リストに追加</button>
                 <button class="btn-blue" id="cancel-edit-btn" style="background:#666; margin-top:10px; display:none;" onclick="resetForm()">キャンセル</button>
@@ -115,7 +125,7 @@
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
     let currentFilter = 'all';
-    const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他" };
+    const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", images: "画像", others: "その他" };
 
     function showSection(cat, btn) {
         currentFilter = cat;
@@ -134,31 +144,38 @@
     function renderWithSearch() {
         const list = document.getElementById('links-list');
         const keyword = document.getElementById('keyword-search').value.toLowerCase();
-        list.innerHTML = '';
+        
+        const mappedLinks = links.map((item, index) => ({ ...item, originalIndex: index }));
 
-        let displayList = links
-            .filter(item => {
-                const matchCat = (currentFilter === 'all') ? (item.cat !== 'docs') : (item.cat === currentFilter);
-                const matchWord = item.title.toLowerCase().includes(keyword);
-                return matchCat && matchWord;
-            })
-            .sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+        const filteredList = mappedLinks.filter(item => {
+            const matchCat = (currentFilter === 'all') || (item.cat === currentFilter);
+            const matchWord = item.title.toLowerCase().includes(keyword);
+            return matchCat && matchWord;
+        });
 
-        displayList.forEach((item) => {
-            const originalIndex = links.indexOf(item);
-            list.innerHTML += `<div class="link-card card-${item.cat}">
+        filteredList.sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+
+        let htmlBuffer = '';
+        filteredList.forEach((item) => {
+            // カテゴリーが「images」の場合はURLをそのまま画像パスとして使用
+            const isImageCat = (item.cat === 'images');
+            
+            htmlBuffer += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
                     <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
                 </div>
+                ${isImageCat && item.url ? `<div class="link-img-wrap"><img src="${item.url}" class="link-img" alt="${item.title}" onerror="this.parentNode.style.display='none'"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
                 ${isUnlocked ? `
                 <div class="action-btns">
-                    <button class="edit-btn" onclick="startEdit(${originalIndex})">編集</button>
-                    <button class="delete-btn" onclick="deleteLink(${originalIndex})">削除</button>
+                    <button class="edit-btn" onclick="startEdit(${item.originalIndex})">編集</button>
+                    <button class="delete-btn" onclick="deleteLink(${item.originalIndex})">削除</button>
                 </div>` : ''}
             </div>`;
         });
+
+        list.innerHTML = htmlBuffer || '<p style="text-align:center; color:#999; padding:20px;">該当する項目はありません</p>';
     }
 
     function unlockEditor() {
@@ -195,12 +212,14 @@
 
     function addOrUpdateLink() {
         const index = parseInt(document.getElementById('edit-index').value);
-        const title = document.getElementById('new-title').value;
-        const url = document.getElementById('new-url').value;
+        const title = document.getElementById('new-title').value.trim();
+        const url = document.getElementById('new-url').value.trim();
         const cat = document.getElementById('new-cat').value;
-        const desc = document.getElementById('new-desc').value;
+        const desc = document.getElementById('new-desc').value.trim();
+        
         if(!title || !url) return alert('入力してください');
         const newItem = { title, url, desc, cat };
+        
         if (index === -1) { links.push(newItem); alert('追加しました'); }
         else { links[index] = newItem; alert('修正しました'); }
         save();
@@ -213,9 +232,16 @@
     async function exportData() {
         document.getElementById('sync-status').innerText = "送信中...";
         try {
-            await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(links) });
+            const response = await fetch(GAS_URL, { 
+                method: "POST", 
+                headers: { "Content-Type": "text/plain" }, 
+                body: JSON.stringify(links) 
+            });
             document.getElementById('sync-status').innerText = "クラウド保存完了！";
-        } catch (e) { document.getElementById('sync-status').innerText = "送信エラー"; }
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('sync-status').innerText = "送信エラー"; 
+        }
     }
 
     async function importData() {
@@ -225,8 +251,12 @@
             links = await res.json();
             save();
             document.getElementById('sync-status').innerText = "同期完了しました！";
-        } catch (e) { document.getElementById('sync-status').innerText = "受信エラー"; }
+        } catch (e) { 
+            console.error(e);
+            document.getElementById('sync-status').innerText = "受信エラー"; 
+        }
     }
+    
     renderWithSearch();
 </script>
 </body>
