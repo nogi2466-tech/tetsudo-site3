@@ -46,9 +46,10 @@
         .badge-others { background: var(--color-others); }
         
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
+        /* 画像項目用のリンクにしないプレーンなタイトルスタイル */
+        .img-title { font-size: 1.05rem; color: #333; font-weight: bold; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
-        /* 画像表示エリアのスタイル調整（画像幅をいっぱいにして見やすく） */
         .link-img-wrap { margin-top: 12px; max-width: 100%; text-align: center; background: #eaeaea; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
         .link-img { max-width: 100%; max-height: 300px; object-fit: contain; display: block; margin: 0 auto; }
 
@@ -157,13 +158,17 @@
 
         let htmlBuffer = '';
         filteredList.forEach((item) => {
-            // カテゴリーが「images」の場合はURLをそのまま画像パスとして使用
             const isImageCat = (item.cat === 'images');
             
+            // 画像カテゴリーならタイトルをリンクにしない、それ以外は通常リンクにする
+            const headerTitleHtml = isImageCat 
+                ? `<span class="img-title">${item.title}</span>`
+                : `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`;
+
             htmlBuffer += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
-                    <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
+                    ${headerTitleHtml}
                 </div>
                 ${isImageCat && item.url ? `<div class="link-img-wrap"><img src="${item.url}" class="link-img" alt="${item.title}" onerror="this.parentNode.style.display='none'"></div>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
