@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>tetsudo-site</title>
+    <title>tetsudo-site & ギャラリー</title>
     <style>
         :root { --blue: #007bff; --dark-blue: #0056b3; --green: #5cb85c; --bg: #f8f9fa; }
         /* カテゴリーカラーの設定 */
@@ -23,11 +23,12 @@
         .nav-inner::-webkit-scrollbar { display: none; }
         .nav-btn { flex: 1; border: none; background: none; padding: 10px 5px; cursor: pointer; font-weight: bold; color: #555; font-size: 0.85rem; border-radius: 25px; transition: 0.2s; text-align: center; white-space: nowrap; min-width: 60px; }
         .nav-btn.active { background: var(--blue); color: white; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
-        .container { padding: 20px 15px; max-width: 600px; margin: auto; }
-        .search-container { margin-bottom: 20px; }
+        .container { padding: 20px 15px; max-width: 1000px; margin: auto; }
+        .search-container { margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; }
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
         
         /* リンクカードのデザイン */
+        .links-wrap { max-width: 600px; margin: auto; }
         .link-card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.03); position: relative; border-left: 6px solid #ccc; display: flex; gap: 15px; align-items: flex-start; }
         .card-keio { border-left-color: var(--color-keio); }
         .card-jr { border-left-color: var(--color-jr); }
@@ -35,13 +36,13 @@
         .card-others { border-left-color: var(--color-others); }
         .card-docs { border-left-color: var(--color-docs); }
 
-        /* 画像表示エリア（クリック可能） */
+        /* サムネイル */
         .link-thumb { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #eee; border: 1px solid #e0e0e0; }
         .clickable-thumb { cursor: pointer; transition: transform 0.2s; }
         .clickable-thumb:hover { transform: scale(1.03); }
         .no-image { display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #999; font-weight: bold; background: #eaeaea; }
 
-        /* テキスト表示エリア */
+        /* カード内テキスト */
         .link-body { flex-grow: 1; min-width: 0; }
         .link-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
         .cat-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; white-space: nowrap; }
@@ -57,71 +58,35 @@
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         .edit-btn { color: var(--blue); border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
 
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); max-width: 600px; margin: auto; }
         .btn-green { background: var(--green); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 25px; font-size: 1rem; }
         .btn-blue { background: var(--blue); color: white; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
 
         /* -----------------------------------------
+           🖼️ 画像ギャラリー専用のスタイル
+        ----------------------------------------- */
+        .gallery-container { text-align: center; }
+        .upload-box { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 40px; }
+        .file-label { display: inline-block; background-color: #34495e; color: #fff; padding: 12px 28px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #imageInput { display: none; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .img-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); position: relative; cursor: pointer; aspect-ratio: 1 / 1; transition: transform 0.2s; }
+        .img-card:hover { transform: translateY(-3px); }
+        .img-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* -----------------------------------------
            🟢 拡大プレビュー画面（モーダル）のスタイル
         ----------------------------------------- */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            user-select: none;
-        }
-        .modal-view-area {
-            width: 90%;
-            height: 70%;
-            overflow: hidden;
-            position: relative;
-            background: #111;
-            border-radius: 8px;
-            cursor: grab;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 1000; justify-content: center; align-items: center; flex-direction: column; user-select: none; }
+        .modal-view-area { width: 90%; height: 70%; overflow: hidden; position: relative; background: #111; border-radius: 8px; cursor: grab; }
         .modal-view-area:active { cursor: grabbing; }
-        #modalImg {
-            position: absolute;
-            max-width: 100%;
-            max-height: 100%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(1);
-            transform-origin: center center;
-            transition: transform 0.05s ease-out;
-        }
-        .modal-controls {
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
-            background: rgba(255,255,255,0.1);
-            padding: 10px 20px;
-            border-radius: 30px;
-            z-index: 1010;
-        }
-        .zoom-btn {
-            background: #fff; border: none; padding: 6px 14px;
-            font-size: 18px; font-weight: bold; border-radius: 4px; cursor: pointer;
-        }
+        #modalImg { position: absolute; max-width: 100%; max-height: 100%; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); transform-origin: center center; transition: transform 0.05s ease-out; }
+        .modal-controls { margin-top: 20px; display: flex; align-items: center; gap: 15px; color: white; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 30px; z-index: 1010; }
+        .zoom-btn { background: #fff; border: none; padding: 6px 14px; font-size: 18px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .zoom-btn:hover { background: #e0e0e0; }
-        .modal-action-btns {
-            margin-top: 15px;
-            display: flex;
-            gap: 15px;
-            z-index: 1010;
-        }
-        .btn {
-            padding: 12px 30px; border-radius: 6px; font-weight: bold;
-            font-size: 16px; text-decoration: none; border: none; cursor: pointer;
-        }
+        .modal-action-btns { margin-top: 15px; display: flex; gap: 15px; z-index: 1010; }
+        .btn { padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px; text-decoration: none; border: none; cursor: pointer; }
         .btn-close { background: #e74c3c; color: white; }
         .btn-dl { background: #2ecc71; color: white; }
     </style>
@@ -130,6 +95,7 @@
 
 <header><h1>tetsudo-site</h1></header>
 
+<!-- ナビゲーションバー（「資料」の隣に「画像」を追加） -->
 <nav><div class="nav-inner">
     <button id="nav-all" class="nav-btn active" onclick="showSection('all', this)">すべて</button>
     <button class="nav-btn" onclick="showSection('keio', this)">京王</button>
@@ -137,19 +103,39 @@
     <button class="nav-btn" onclick="showSection('private', this)">大手私鉄</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
+    <button id="nav-gallery" class="nav-btn" onclick="showSection('gallery', this)">画像</button>
     <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
 <div class="container">
+    <!-- 検索バー（通常リンク画面のみ表示） -->
     <div class="search-container" id="search-bar-wrap">
         <input type="text" id="keyword-search" class="search-input" placeholder="🔍 タイトルで検索..." oninput="renderWithSearch()">
     </div>
 
+    <!-- 通常リンク表示画面 -->
     <div id="links-view">
-        <h2 id="page-title" style="font-size: 1.3rem; margin-bottom: 15px;">すべて</h2>
-        <div id="links-list"></div>
+        <div class="links-wrap">
+            <h2 id="page-title" style="font-size: 1.3rem; margin-bottom: 15px;">すべて</h2>
+            <div id="links-list"></div>
+        </div>
     </div>
 
+    <!-- 🖼️ 画像ギャラリー専用表示画面 -->
+    <div id="gallery-view" style="display:none;" class="gallery-container">
+        <h2 style="font-size: 1.5rem; color: #2c3e50; margin-bottom: 10px;">📸 超高機能画像ギャラリー</h2>
+        <p style="color: #7f8c8d; margin-bottom: 30px;">画像をクリックした後、スクロールやドラッグで「自由に変更・位置調整」が可能です。</p>
+
+        <div class="upload-box">
+            <label for="imageInput" class="file-label">画像を追加する（複数選択可）</label>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+        </div>
+
+        <!-- アップロード画像一覧 -->
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+
+    <!-- 設定・管理画面 -->
     <div id="settings" style="display:none;">
         <div class="card">
             <h2 id="edit-mode-title">同期と管理</h2>
@@ -182,7 +168,7 @@
     </div>
 </div>
 
-<!-- 拡大表示用モーダル画面 -->
+<!-- 拡大表示用モーダル画面（共通） -->
 <div id="imageModal" class="modal">
     <div class="modal-view-area" id="viewArea">
         <img id="modalImg" src="" alt="拡大プレビュー" draggable="false">
@@ -207,7 +193,7 @@
     let currentFilter = 'all';
     const catLabels = { keio: "京王", jr: "JR", private: "大手私鉄", docs: "資料", others: "その他" };
 
-    // モーダル関連の要素取得
+    // 各画面要素の取得
     const imageModal = document.getElementById('imageModal');
     const viewArea = document.getElementById('viewArea');
     const modalImg = document.getElementById('modalImg');
@@ -217,25 +203,34 @@
     const zoomOut = document.getElementById('zoomOut');
     const zoomSlider = document.getElementById('zoomSlider');
     const zoomPercent = document.getElementById('zoomPercent');
+    const imageInput = document.getElementById('imageInput');
+    const galleryGrid = document.getElementById('galleryGrid');
 
     // モーダル状態管理変数
     let scale = 1, posX = 0, posY = 0, isDragging = false, startX, startY;
-    let touchStartDist = 0; // スマホピンチ用
+    let touchStartDist = 0;
 
+    // 画面切り替え制御
     function showSection(cat, btn) {
         currentFilter = cat;
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
+
         const isSettings = (cat === 'settings');
-        document.getElementById('links-view').style.display = isSettings ? 'none' : 'block';
+        const isGallery = (cat === 'gallery');
+
+        document.getElementById('links-view').style.display = (isSettings || isGallery) ? 'none' : 'block';
         document.getElementById('settings').style.display = isSettings ? 'block' : 'none';
-        document.getElementById('search-bar-wrap').style.display = isSettings ? 'none' : 'block';
-        if(!isSettings) {
+        document.getElementById('gallery-view').style.display = isGallery ? 'block' : 'none';
+        document.getElementById('search-bar-wrap').style.display = (isSettings || isGallery) ? 'none' : 'block';
+
+        if(!isSettings && !isGallery) {
             document.getElementById('page-title').innerText = btn ? btn.innerText : 'すべて';
             renderWithSearch();
         }
     }
 
+    // 通常リンク集の描画
     function renderWithSearch() {
         const list = document.getElementById('links-list');
         const keyword = document.getElementById('keyword-search').value.toLowerCase();
@@ -276,12 +271,40 @@
     }
 
     /* -----------------------------------------
+       🖼️ 画像ギャラリー専用ローカルアップロードロジック
+    ----------------------------------------- */
+    imageInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                createGalleryCard(event.target.result, file.name);
+            };
+            reader.readAsDataURL(file);
+        });
+        imageInput.value = '';
+    });
+
+    function createGalleryCard(dataUrl, filename) {
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        card.appendChild(img);
+        
+        card.addEventListener('click', () => {
+            openPreview(dataUrl, filename);
+        });
+        galleryGrid.appendChild(card);
+    }
+
+    /* -----------------------------------------
        📸 高機能画像プレビュー（モーダル）ロジック
     ----------------------------------------- */
     function openPreview(dataUrl, title) {
         modalImg.src = dataUrl;
         modalDlBtn.href = dataUrl;
-        modalDlBtn.download = `${title}.jpg`;
+        modalDlBtn.download = `download_${title}`;
         scale = 1; posX = 0; posY = 0;
         updateTransform();
         imageModal.style.display = 'flex';
@@ -310,9 +333,7 @@
         }
     }, { passive: false });
 
-    /* -----------------------------------------
-       🖱️ マウスドラッグによる移動処理
-    ----------------------------------------- */
+    /* 🖱️ マウスドラッグ移動 */
     viewArea.addEventListener('mousedown', (e) => {
         isDragging = true;
         startX = e.clientX - posX;
@@ -326,13 +347,9 @@
         updateTransform();
     });
 
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
 
-    /* -----------------------------------------
-       📱 スマホ対応（タッチ移動＆ピンチイン・アウト）
-    ----------------------------------------- */
+    /* 📱 スマホ対応（タッチ＆ピンチ） */
     viewArea.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
             isDragging = true;
@@ -363,21 +380,11 @@
         }
     }, { passive: true });
 
-    viewArea.addEventListener('touchend', () => {
-        isDragging = false;
-    });
+    viewArea.addEventListener('touchend', () => { isDragging = false; });
 
     // モーダルを閉じる
-    closeModal.addEventListener('click', () => {
-        imageModal.style.display = 'none';
-        modalImg.src = '';
-    });
-    imageModal.addEventListener('click', (e) => { 
-        if(e.target === imageModal) {
-            imageModal.style.display = 'none';
-            modalImg.src = '';
-        }
-    });
+    closeModal.addEventListener('click', () => { imageModal.style.display = 'none'; modalImg.src = ''; });
+    imageModal.addEventListener('click', (e) => { if(e.target === imageModal) { imageModal.style.display = 'none'; modalImg.src = ''; } });
 
     /* -----------------------------------------
        ⚙️ 管理画面・同期ロジック
@@ -458,6 +465,7 @@
         } catch (e) { document.getElementById('sync-status').innerText = "受信エラー"; }
     }
     
+    // 初期表示
     renderWithSearch();
 </script>
 </body>
