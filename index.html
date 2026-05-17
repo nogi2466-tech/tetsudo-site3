@@ -45,13 +45,14 @@
         .badge-images { background: var(--color-images); }
         .badge-others { background: var(--color-others); }
         
-        .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; }
-        /* 画像項目用のリンクにしないプレーンなタイトルスタイル */
-        .img-title { font-size: 1.05rem; color: #333; font-weight: bold; }
+        /* タイトルリンクをブロック要素にしてタップ領域を拡大 */
+        .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; display: inline-block; cursor: pointer; }
+        .link-title:hover { text-decoration: underline; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
-        .link-img-wrap { margin-top: 12px; max-width: 100%; text-align: center; background: #eaeaea; border-radius: 8px; overflow: hidden; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
-        .link-img { max-width: 100%; max-height: 300px; object-fit: contain; display: block; margin: 0 auto; }
+        /* 画像表示用のスタイル */
+        .link-img-wrap { margin-top: 10px; max-width: 100%; text-align: center; background: #eee; border-radius: 6px; overflow: hidden; display: block; }
+        .link-img { max-width: 100%; max-height: 200px; object-fit: contain; display: block; margin: 0 auto; cursor: pointer; }
 
         .action-btns { margin-top: 10px; text-align: right; display: flex; justify-content: flex-end; gap: 15px; }
         .delete-btn { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
@@ -74,7 +75,7 @@
     <button class="nav-btn" onclick="showSection('private', this)">大手私鉄</button>
     <button class="nav-btn" onclick="showSection('others', this)">その他</button>
     <button class="nav-btn" onclick="showSection('docs', this)">資料</button>
-    <button class="nav-btn" onclick="showSection('images', this)">画像</button>
+    <button class="nav-btn" onclick="showSection('images', this)">画像</button> 
     <button id="nav-settings" class="nav-btn" onclick="showSection('settings', this)">同期・管理</button>
 </div></nav>
 
@@ -109,7 +110,8 @@
                     <option value="images">画像</option>
                 </select>
                 <input type="text" id="new-title" placeholder="タイトル">
-                <input type="url" id="new-url" placeholder="URL (画像カテゴリーの場合は画像のURL)">
+                <input type="url" id="new-url" placeholder="URL">
+                <input type="url" id="new-img-url" placeholder="画像URL（任意・httpから始まる画像のリンク）"> 
                 <textarea id="new-desc" placeholder="詳細説明（任意）" rows="3"></textarea>
                 <button class="btn-blue" id="add-update-btn" onclick="addOrUpdateLink()">リストに追加</button>
                 <button class="btn-blue" id="cancel-edit-btn" style="background:#666; margin-top:10px; display:none;" onclick="resetForm()">キャンセル</button>
@@ -158,19 +160,17 @@
 
         let htmlBuffer = '';
         filteredList.forEach((item) => {
-            const isImageCat = (item.cat === 'images');
-            
-            // 画像カテゴリーならタイトルをリンクにしない、それ以外は通常リンクにする
-            const headerTitleHtml = isImageCat 
-                ? `<span class="img-title">${item.title}</span>`
-                : `<a href="${item.url}" target="_blank" class="link-title">${item.title}</a>`;
-
             htmlBuffer += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
-                    ${headerTitleHtml}
+                    <!-- 確実にURLが開くように設定 -->
+                    <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
                 </div>
-                ${isImageCat && item.url ? `<div class="link-img-wrap"><img src="${item.url}" class="link-img" alt="${item.title}" onerror="this.parentNode.style.display='none'"></div>` : ''}
+                <!-- サムネイル枠全体をAタグで囲み、画像をタップしても飛べるように修正 -->
+                ${item.imgUrl ? `
+                <a href="${item.url}" target="_blank" class="link-img-wrap">
+                    <img src="${item.imgUrl}" class="link-img" alt="thumbnail" onerror="this.parentNode.style.display='none'">
+                </a>` : ''}
                 ${item.desc ? `<div class="link-desc">${item.desc}</div>` : ''}
                 ${isUnlocked ? `
                 <div class="action-btns">
@@ -198,6 +198,7 @@
         document.getElementById('new-cat').value = item.cat;
         document.getElementById('new-title').value = item.title;
         document.getElementById('new-url').value = item.url;
+        document.getElementById('new-img-url').value = item.imgUrl || '';
         document.getElementById('new-desc').value = item.desc || '';
         document.getElementById('add-update-btn').innerText = "修正を保存する";
         document.getElementById('cancel-edit-btn').style.display = "block";
@@ -209,6 +210,7 @@
         document.getElementById('edit-index').value = "-1";
         document.getElementById('new-title').value = '';
         document.getElementById('new-url').value = '';
+        document.getElementById('new-img-url').value = '';
         document.getElementById('new-desc').value = '';
         document.getElementById('add-update-btn').innerText = "リストに追加";
         document.getElementById('cancel-edit-btn').style.display = "none";
@@ -219,11 +221,12 @@
         const index = parseInt(document.getElementById('edit-index').value);
         const title = document.getElementById('new-title').value.trim();
         const url = document.getElementById('new-url').value.trim();
+        const imgUrl = document.getElementById('new-img-url').value.trim();
         const cat = document.getElementById('new-cat').value;
         const desc = document.getElementById('new-desc').value.trim();
         
         if(!title || !url) return alert('入力してください');
-        const newItem = { title, url, desc, cat };
+        const newItem = { title, url, imgUrl, desc, cat };
         
         if (index === -1) { links.push(newItem); alert('追加しました'); }
         else { links[index] = newItem; alert('修正しました'); }
