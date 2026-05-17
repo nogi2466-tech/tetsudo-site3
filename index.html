@@ -13,7 +13,7 @@
             --color-private: #f39c12; 
             --color-others: #6c757d; 
             --color-docs: #ffc107; 
-            --color-images: #17a2b8; /* 画像カテゴリーの色 */
+            --color-images: #17a2b8; 
         }
 
         html, body { margin: 0; padding: 0; background: var(--bg); color: #333; overflow-x: hidden; }
@@ -45,12 +45,10 @@
         .badge-images { background: var(--color-images); }
         .badge-others { background: var(--color-others); }
         
-        /* タイトルリンクをブロック要素にしてタップ領域を拡大 */
         .link-title { font-size: 1.05rem; color: var(--blue); text-decoration: none; font-weight: bold; display: inline-block; cursor: pointer; }
         .link-title:hover { text-decoration: underline; }
         .link-desc { font-size: 0.8rem; color: #666; margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         
-        /* 画像表示用のスタイル */
         .link-img-wrap { margin-top: 10px; max-width: 100%; text-align: center; background: #eee; border-radius: 6px; overflow: hidden; display: block; }
         .link-img { max-width: 100%; max-height: 200px; object-fit: contain; display: block; margin: 0 auto; cursor: pointer; }
 
@@ -151,7 +149,11 @@
         const mappedLinks = links.map((item, index) => ({ ...item, originalIndex: index }));
 
         const filteredList = mappedLinks.filter(item => {
-            const matchCat = (currentFilter === 'all') || (item.cat === currentFilter);
+            // 「すべて」タブの場合は、画像(images)と資料(docs)を除外する
+            const matchCat = (currentFilter === 'all') 
+                ? (item.cat !== 'images' && item.cat !== 'docs') 
+                : (item.cat === currentFilter);
+                
             const matchWord = item.title.toLowerCase().includes(keyword);
             return matchCat && matchWord;
         });
@@ -163,10 +165,8 @@
             htmlBuffer += `<div class="link-card card-${item.cat}">
                 <div class="link-header">
                     <span class="cat-badge badge-${item.cat}">${catLabels[item.cat]}</span>
-                    <!-- 確実にURLが開くように設定 -->
                     <a href="${item.url}" target="_blank" class="link-title">${item.title}</a>
                 </div>
-                <!-- サムネイル枠全体をAタグで囲み、画像をタップしても飛べるように修正 -->
                 ${item.imgUrl ? `
                 <a href="${item.url}" target="_blank" class="link-img-wrap">
                     <img src="${item.imgUrl}" class="link-img" alt="thumbnail" onerror="this.parentNode.style.display='none'">
