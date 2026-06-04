@@ -1,4 +1,4 @@
-// ⚠️ 以下のURLをご自身のGASウェブアプリURL（末尾が/execのもの）に書き換えてください
+// ⚠️ 以下のURLをご自身の最新のGASウェブアプリURL（末尾が/execのもの）に書き換えてください
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzbDWKKqnuT1YMhTXNkGa9B82TKwcbVqwpqtGBegAnf1z28JR-EfJqegQBIyub17L-xIA/exec";
 const MASTER_PASS = "0829"; 
 let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
@@ -27,6 +27,7 @@ function renderWithSearch() {
     const mappedLinks = links.map((item, index) => ({ ...item, originalIndex: index }));
 
     const filteredList = mappedLinks.filter(item => {
+        // 「すべて」タブの場合は、画像(images)と資料(docs)を除外する
         const matchCat = (currentFilter === 'all') 
             ? (item.cat !== 'images' && item.cat !== 'docs') 
             : (item.cat === currentFilter);
@@ -114,16 +115,20 @@ function addOrUpdateLink() {
 function deleteLink(i) { if(confirm('削除しますか？')) { links.splice(i,1); save(); } }
 function save() { localStorage.setItem('tetsudo_links', JSON.stringify(links)); renderWithSearch(); }
 
-// GAS連携：送信（POST）関数
+// GAS連携：送信（POST）関数 【CORSエラー完全対策版】
 async function exportData() {
     document.getElementById('sync-status').innerText = "送信中...";
     try {
+        // ブラウザのセキュリティブロックを回避するためフォームデータ形式で送信
+        const formData = new URLSearchParams();
+        formData.append('json', JSON.stringify(links));
+
         const response = await fetch(GAS_URL, { 
             method: "POST", 
             mode: "cors",
             redirect: "follow",
-            headers: { "Content-Type": "text/plain" }, 
-            body: JSON.stringify(links) 
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }, 
+            body: formData.toString()
         });
         
         if (!response.ok) throw new Error("Network error");
