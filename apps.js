@@ -1,5 +1,5 @@
 // ⚠️ 以下のURLをご自身の最新のGASウェブアプリURL（末尾が/execのもの）に書き換えてください
-const GAS_URL = "https://script.google.com/macros/s/AKfycbykns2Nd-BAHXceLVH8vtAs-ekgEzYJvYTXILZXbMsimJ_E8YaMzGnUNbTXHvsjNq827g/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxEi14YSuM1zu0E2HdxYgM2cE4lUY8vkZf5fRZ2lDbjVu96GlprJn5N6U2oYBnFi4XpjQ/exec";
 const MASTER_PASS = "0829"; 
 let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
 let isUnlocked = false;
