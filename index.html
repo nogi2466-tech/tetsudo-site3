@@ -65,7 +65,7 @@
     </div>
 </div>
 
-<!-- 外部JSファイルを読み込み -->
-<script src="apps.js"></script>
+<!-- 外部JSファイルを読み込み（末尾に ?v=2 を付けてスマホの古いキャッシュを強制上書きします） -->
+<script src="apps.js?v=2"></script>
 </body>
 </html>
