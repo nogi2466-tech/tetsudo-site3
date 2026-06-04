@@ -121,7 +121,7 @@
 </div>
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzwdxyec68__OZYLtea6buKy4O9XkKm5qfrJKkuzWx7UDf9f4WAibPWcDnVNMdTs3B3HQ/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzbDWKKqnuT1YMhTXNkGa9B82TKwcbVqwpqtGBegAnf1z28JR-EfJqegQBIyub17L-xIA/exec";
     const MASTER_PASS = "0829"; 
     let links = JSON.parse(localStorage.getItem('tetsudo_links')) || [];
     let isUnlocked = false;
