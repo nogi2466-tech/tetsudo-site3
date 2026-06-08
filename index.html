@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>tetsudo-site6</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -365,6 +366,7 @@
   let searchText = "";
   let adminMode = false;
   let editIndex = null;
+  let viewMode = "list"; // "list" or "settings"
 
   const tabsEl = document.getElementById("tabs");
   const searchInput = document.getElementById("searchInput");
@@ -407,19 +409,14 @@
     set(dataRef, items);
   }
 
-  function showList() {
-    settingsSection.classList.add("hidden");
-    listSection.classList.remove("hidden");
-    currentTab = "すべて";
-    document.querySelectorAll(".tab").forEach(t => {
-      t.classList.toggle("active", t.dataset.tab === "すべて");
-    });
-    render();
-  }
-
-  function showSettings() {
-    listSection.classList.add("hidden");
-    settingsSection.classList.remove("hidden");
+  function updateView() {
+    if (viewMode === "list") {
+      listSection.classList.remove("hidden");
+      settingsSection.classList.add("hidden");
+    } else {
+      listSection.classList.add("hidden");
+      settingsSection.classList.remove("hidden");
+    }
   }
 
   function resetForm() {
@@ -431,67 +428,68 @@
     newURL.value = "";
     newDetail.value = "";
     newCategory.value = "京王";
+    passwordBlock.classList.add("hidden");
+    formBlock.classList.remove("hidden");
   }
 
   function render() {
-    if (!listSection.classList.contains("hidden")) {
-      sectionTitle.textContent = currentTab;
-      const filtered = items
-        .filter(item => {
-          if (currentTab !== "すべて" && item.category !== currentTab) return false;
-          if (!searchText) return true;
-          return (item.title || "").toLowerCase().includes(searchText.toLowerCase());
-        })
-        .sort((a, b) => (a.title || "").localeCompare(b.title || "", "ja"));
+    sectionTitle.textContent = currentTab;
 
-      cardList.innerHTML = "";
-      filtered.forEach((item, index) => {
-        const card = document.createElement("div");
-        const catClass = "cat-" + (item.category || "");
-        card.className = "card " + catClass;
+    const filtered = items
+      .filter(item => {
+        if (currentTab !== "すべて" && item.category !== currentTab) return false;
+        if (!searchText) return true;
+        return (item.title || "").toLowerCase().includes(searchText.toLowerCase());
+      })
+      .sort((a, b) => (a.title || "").localeCompare(b.title || "", "ja"));
 
-        const cat = document.createElement("div");
-        cat.className = "card-category";
-        cat.textContent = item.category || "";
+    cardList.innerHTML = "";
+    filtered.forEach((item, index) => {
+      const card = document.createElement("div");
+      const catClass = "cat-" + (item.category || "");
+      card.className = "card " + catClass;
 
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.textContent = item.title || "";
+      const cat = document.createElement("div");
+      cat.className = "card-category";
+      cat.textContent = item.category || "";
 
-        const detail = document.createElement("div");
-        detail.className = "card-detail";
-        detail.textContent = item.detail || "";
+      const title = document.createElement("div");
+      title.className = "card-title";
+      title.textContent = item.title || "";
 
-        card.appendChild(cat);
-        card.appendChild(title);
-        card.appendChild(detail);
+      const detail = document.createElement("div");
+      detail.className = "card-detail";
+      detail.textContent = item.detail || "";
 
-        if (adminMode) {
-          const btns = document.createElement("div");
-          btns.className = "edit-buttons";
+      card.appendChild(cat);
+      card.appendChild(title);
+      card.appendChild(detail);
 
-          const editBtn = document.createElement("button");
-          editBtn.className = "edit-btn";
-          editBtn.textContent = "編集";
-          editBtn.onclick = () => startEdit(item, index);
+      if (adminMode) {
+        const btns = document.createElement("div");
+        btns.className = "edit-buttons";
 
-          const delBtn = document.createElement("button");
-          delBtn.className = "delete-btn";
-          delBtn.textContent = "削除";
-          delBtn.onclick = () => deleteItem(index);
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "編集";
+        editBtn.onclick = () => startEdit(item, index);
 
-          btns.appendChild(editBtn);
-          btns.appendChild(delBtn);
-          card.appendChild(btns);
-        } else {
-          card.onclick = () => {
-            if (item.url) window.open(item.url, "_blank");
-          };
-        }
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "削除";
+        delBtn.onclick = () => deleteItem(index);
 
-        cardList.appendChild(card);
-      });
-    }
+        btns.appendChild(editBtn);
+        btns.appendChild(delBtn);
+        card.appendChild(btns);
+      } else {
+        card.onclick = () => {
+          if (item.url) window.open(item.url, "_blank");
+        };
+      }
+
+      cardList.appendChild(card);
+    });
   }
 
   function startEdit(item, index) {
@@ -506,9 +504,10 @@
     newDetail.value = item.detail || "";
     newCategory.value = item.category || "京王";
 
-    showSettings();
+    viewMode = "settings";
     passwordBlock.classList.add("hidden");
     formBlock.classList.remove("hidden");
+    updateView();
   }
 
   function deleteItem(index) {
@@ -524,17 +523,19 @@
     if (!tab) return;
     const tabName = tab.dataset.tab;
 
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
     if (tabName === "同期・管理") {
-      showSettings();
-      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
+      viewMode = "settings";
+      updateView();
       return;
     }
 
     currentTab = tabName;
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    showList();
+    viewMode = "list";
+    updateView();
+    render();
   });
 
   searchInput.addEventListener("input", () => {
@@ -576,12 +577,16 @@
     saveToFirebase();
     alert("保存しました");
     resetForm();
-    showList();
+    viewMode = "list";
+    updateView();
+    render();
   });
 
   backToList.addEventListener("click", () => {
     resetForm();
-    showList();
+    viewMode = "list";
+    updateView();
+    render();
   });
 
   cloudLoad.addEventListener("click", () => {
@@ -593,6 +598,10 @@
     saveToFirebase();
     alert("クラウドに保存しました");
   });
+
+  // 初期表示
+  updateView();
+  render();
 </script>
 
 </body>
