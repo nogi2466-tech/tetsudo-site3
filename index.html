@@ -4,30 +4,32 @@
   <meta charset="UTF-8">
   <title>tetsudo-site6</title>
   <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
     body {
       font-family: system-ui, sans-serif;
-      margin: 0;
       background: #f5f5f5;
-      display: flex;
-      justify-content: center;
     }
 
     .container {
       width: 100%;
-      max-width: 900px;
-      background: #fff;
+      max-width: 100%;
       min-height: 100vh;
-      box-shadow: 0 0 10px #0002;
+      background: #fff;
     }
 
     header {
       background: #1976d2;
       color: #fff;
-      padding: 14px 16px;
+      padding: 12px 16px;
     }
 
     header h1 {
-      margin: 0 0 10px;
+      margin: 0 0 8px;
       font-size: 22px;
       text-align: center;
     }
@@ -47,6 +49,7 @@
       color: #fff;
       border: 1px solid #fff4;
       transition: 0.2s;
+      white-space: nowrap;
     }
 
     .tab:hover {
@@ -60,20 +63,20 @@
     }
 
     .search-bar {
-      padding: 12px 16px;
+      padding: 10px 16px;
       background: #e3f2fd;
     }
 
     .search-bar input {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
       border-radius: 6px;
       border: 1px solid #bbb;
       font-size: 15px;
     }
 
     main {
-      padding: 16px;
+      padding: 12px 16px 24px;
     }
 
     .section-title {
@@ -85,13 +88,13 @@
     .card-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .card {
       background: #fff;
       border-radius: 10px;
-      padding: 14px;
+      padding: 12px;
       border-left: 6px solid #ccc;
       transition: 0.2s;
     }
@@ -117,43 +120,34 @@
       color: #555;
     }
 
-    /* 編集・削除ボタン */
     .edit-buttons {
       margin-top: 8px;
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .edit-btn {
+    .edit-btn, .delete-btn {
       padding: 6px 10px;
       font-size: 13px;
       border-radius: 6px;
       border: none;
       cursor: pointer;
-      background: #1976d2;
       color: #fff;
     }
 
-    .delete-btn {
-      padding: 6px 10px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #d32f2f;
-      color: #fff;
-    }
+    .edit-btn { background: #1976d2; }
+    .delete-btn { background: #d32f2f; }
 
-    /* カテゴリ色（強調版） */
+    /* カテゴリ色 */
     .cat-京王 { border-left-color: #ff80ab; }
     .cat-JR { border-left-color: #4caf50; }
     .cat-大手私鉄 { border-left-color: #ffd54f; }
     .cat-その他 { border-left-color: #9e9e9e; }
     .cat-資料 { border-left-color: #ba68c8; }
 
-    /* 設定画面 */
     .settings {
-      max-width: 500px;
+      max-width: 520px;
       margin: 0 auto;
     }
 
@@ -171,7 +165,6 @@
       font-size: 14px;
       border-radius: 6px;
       border: 1px solid #bbb;
-      box-sizing: border-box;
     }
 
     .settings textarea {
@@ -180,7 +173,7 @@
     }
 
     .settings button {
-      margin-top: 12px;
+      margin-top: 10px;
       padding: 10px 14px;
       font-size: 15px;
       border-radius: 6px;
@@ -189,17 +182,14 @@
       font-weight: 600;
     }
 
-    /* クラウドボタン強調 */
     #cloudLoad {
       background: #4caf50;
       color: #fff;
     }
-
     #cloudSave {
       background: #1976d2;
       color: #fff;
     }
-
     #cloudLoad:hover { background: #3d8b41; }
     #cloudSave:hover { background: #145ca3; }
 
@@ -209,27 +199,64 @@
       margin-top: 4px;
     }
 
-    .hidden {
-      display: none;
+    .hidden { display: none; }
+
+    .back-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .back-btn {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #555;
+      color: #fff;
     }
 
-    /* スマホ最適化 */
-    @media (max-width: 600px) {
+    /* PC向け（広く） */
+    @media (min-width: 900px) {
       .container {
         max-width: 100%;
       }
-      .tab {
-        font-size: 12px;
-        padding: 6px 10px;
+      main {
+        padding: 20px 40px 32px;
       }
       .card {
-        padding: 12px;
+        padding: 14px 16px;
+      }
+      .tab {
+        font-size: 15px;
+        padding: 8px 16px;
+      }
+    }
+
+    /* スマホ向け（小さく・全部入るように） */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 18px;
+      }
+      .tabs {
+        gap: 4px;
+      }
+      .tab {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
+      .card {
+        padding: 10px;
       }
       .card-title {
         font-size: 15px;
       }
       .card-detail {
         font-size: 13px;
+      }
+      main {
+        padding: 10px 8px 20px;
       }
     }
   </style>
@@ -256,23 +283,29 @@
 </div>
 
 <main>
+  <!-- 一覧画面 -->
   <div id="listSection">
     <div class="section-title" id="sectionTitle">すべて</div>
     <div class="card-list" id="cardList"></div>
   </div>
 
+  <!-- 追加 / 編集画面 -->
   <div id="settingsSection" class="hidden">
     <div class="section-title">同期・管理</div>
 
-    <div class="settings">
+    <div class="settings" id="passwordBlock">
       <label>編集パスワード</label>
       <input type="password" id="adminPass" placeholder="パスワードを入力">
       <button id="passSubmit" style="background:#555;color:#fff;">送信</button>
-      <div class="hint">正しいパスワードを入力すると編集・削除が有効になります。</div>
+      <div class="hint">正しいパスワードを入力すると追加・編集・削除が有効になります。</div>
     </div>
 
-    <div class="settings hidden" id="addForm">
-      <hr style="margin:16px 0;">
+    <div class="settings hidden" id="formBlock">
+      <div class="back-row">
+        <button class="back-btn" id="backToList">◀ 戻る</button>
+        <span id="formModeLabel" style="font-size:14px;color:#333;"></span>
+      </div>
+
       <div class="section-title" id="formTitle">新規URL追加</div>
 
       <label>タイトル</label>
@@ -342,18 +375,20 @@
 
   const adminPass = document.getElementById("adminPass");
   const passSubmit = document.getElementById("passSubmit");
-  const addForm = document.getElementById("addForm");
+  const passwordBlock = document.getElementById("passwordBlock");
+  const formBlock = document.getElementById("formBlock");
   const newTitle = document.getElementById("newTitle");
   const newURL = document.getElementById("newURL");
   const newDetail = document.getElementById("newDetail");
   const newCategory = document.getElementById("newCategory");
   const addSubmit = document.getElementById("addSubmit");
   const formTitle = document.getElementById("formTitle");
+  const formModeLabel = document.getElementById("formModeLabel");
+  const backToList = document.getElementById("backToList");
 
   const cloudLoad = document.getElementById("cloudLoad");
   const cloudSave = document.getElementById("cloudSave");
 
-  // 匿名ログイン
   signInAnonymously(auth).then(() => {
     loadFromFirebase();
   });
@@ -372,117 +407,155 @@
     set(dataRef, items);
   }
 
-  function render() {
-    if (currentTab === "同期・管理") {
-      listSection.classList.add("hidden");
-      settingsSection.classList.remove("hidden");
-      return;
-    } else {
-      listSection.classList.remove("hidden");
-      settingsSection.classList.add("hidden");
-    }
-
-    sectionTitle.textContent = currentTab;
-
-    const filtered = items
-      .filter(item => {
-        if (currentTab !== "すべて" && item.category !== currentTab) return false;
-        if (!searchText) return true;
-        return item.title.toLowerCase().includes(searchText.toLowerCase());
-      })
-      .sort((a, b) => a.title.localeCompare(b.title, "ja"));
-
-    cardList.innerHTML = "";
-    filtered.forEach((item, index) => {
-      const card = document.createElement("div");
-      const catClass = "cat-" + item.category;
-      card.className = "card " + catClass;
-
-      card.innerHTML = `
-        <div class="card-category">${item.category}</div>
-        <div class="card-title">${item.title}</div>
-        <div class="card-detail">${item.detail}</div>
-      `;
-
-      if (adminMode) {
-        const btns = document.createElement("div");
-        btns.className = "edit-buttons";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.textContent = "編集";
-        editBtn.onclick = () => startEdit(item, index);
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "delete-btn";
-        delBtn.textContent = "削除";
-        delBtn.onclick = () => deleteItem(index);
-
-        btns.appendChild(editBtn);
-        btns.appendChild(delBtn);
-        card.appendChild(btns);
-      } else {
-        card.onclick = () => window.open(item.url, "_blank");
-      }
-
-      cardList.appendChild(card);
+  function showList() {
+    settingsSection.classList.add("hidden");
+    listSection.classList.remove("hidden");
+    currentTab = "すべて";
+    document.querySelectorAll(".tab").forEach(t => {
+      t.classList.toggle("active", t.dataset.tab === "すべて");
     });
+    render();
   }
 
-  // 編集開始
+  function showSettings() {
+    listSection.classList.add("hidden");
+    settingsSection.classList.remove("hidden");
+  }
+
+  function resetForm() {
+    editIndex = null;
+    formTitle.textContent = "新規URL追加";
+    formModeLabel.textContent = "";
+    addSubmit.textContent = "追加";
+    newTitle.value = "";
+    newURL.value = "";
+    newDetail.value = "";
+    newCategory.value = "京王";
+  }
+
+  function render() {
+    if (!listSection.classList.contains("hidden")) {
+      sectionTitle.textContent = currentTab;
+      const filtered = items
+        .filter(item => {
+          if (currentTab !== "すべて" && item.category !== currentTab) return false;
+          if (!searchText) return true;
+          return (item.title || "").toLowerCase().includes(searchText.toLowerCase());
+        })
+        .sort((a, b) => (a.title || "").localeCompare(b.title || "", "ja"));
+
+      cardList.innerHTML = "";
+      filtered.forEach((item, index) => {
+        const card = document.createElement("div");
+        const catClass = "cat-" + (item.category || "");
+        card.className = "card " + catClass;
+
+        const cat = document.createElement("div");
+        cat.className = "card-category";
+        cat.textContent = item.category || "";
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = item.title || "";
+
+        const detail = document.createElement("div");
+        detail.className = "card-detail";
+        detail.textContent = item.detail || "";
+
+        card.appendChild(cat);
+        card.appendChild(title);
+        card.appendChild(detail);
+
+        if (adminMode) {
+          const btns = document.createElement("div");
+          btns.className = "edit-buttons";
+
+          const editBtn = document.createElement("button");
+          editBtn.className = "edit-btn";
+          editBtn.textContent = "編集";
+          editBtn.onclick = () => startEdit(item, index);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "delete-btn";
+          delBtn.textContent = "削除";
+          delBtn.onclick = () => deleteItem(index);
+
+          btns.appendChild(editBtn);
+          btns.appendChild(delBtn);
+          card.appendChild(btns);
+        } else {
+          card.onclick = () => {
+            if (item.url) window.open(item.url, "_blank");
+          };
+        }
+
+        cardList.appendChild(card);
+      });
+    }
+  }
+
   function startEdit(item, index) {
+    if (!adminMode) return;
     editIndex = index;
-    formTitle.textContent = "編集モード";
+    formTitle.textContent = "URL編集";
+    formModeLabel.textContent = "編集モード";
     addSubmit.textContent = "保存";
 
-    newTitle.value = item.title;
-    newURL.value = item.url;
-    newDetail.value = item.detail;
-    newCategory.value = item.category;
+    newTitle.value = item.title || "";
+    newURL.value = item.url || "";
+    newDetail.value = item.detail || "";
+    newCategory.value = item.category || "京王";
 
-    addForm.classList.remove("hidden");
+    showSettings();
+    passwordBlock.classList.add("hidden");
+    formBlock.classList.remove("hidden");
   }
 
-  // 削除
   function deleteItem(index) {
+    if (!adminMode) return;
     if (!confirm("削除しますか？")) return;
     items.splice(index, 1);
     saveToFirebase();
     render();
   }
 
-  // タブ切り替え
   tabsEl.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab");
     if (!tab) return;
-    currentTab = tab.dataset.tab;
+    const tabName = tab.dataset.tab;
 
+    if (tabName === "同期・管理") {
+      showSettings();
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      return;
+    }
+
+    currentTab = tabName;
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-
-    render();
+    showList();
   });
 
-  // 検索
   searchInput.addEventListener("input", () => {
     searchText = searchInput.value.trim();
     render();
   });
 
-  // パスワードチェック
   passSubmit.addEventListener("click", () => {
     if (adminPass.value === PASSWORD) {
       adminMode = true;
-      addForm.classList.remove("hidden");
       adminPass.value = "";
       alert("編集モードが有効になりました");
+      passwordBlock.classList.add("hidden");
+      formBlock.classList.remove("hidden");
+      resetForm();
       render();
     } else {
       alert("パスワードが違います");
     }
   });
 
-  // 追加 / 保存
   addSubmit.addEventListener("click", () => {
     const title = newTitle.value.trim();
     const url = newURL.value.trim();
@@ -496,36 +569,30 @@
 
     if (editIndex !== null) {
       items[editIndex] = { title, url, detail, category };
-      editIndex = null;
-      formTitle.textContent = "新規URL追加";
-      addSubmit.textContent = "追加";
     } else {
       items.push({ title, url, detail, category });
     }
 
     saveToFirebase();
-
-    newTitle.value = "";
-    newURL.value = "";
-    newDetail.value = "";
-    newCategory.value = "京王";
-
     alert("保存しました");
-    render();
+    resetForm();
+    showList();
   });
 
-  // クラウド受信
+  backToList.addEventListener("click", () => {
+    resetForm();
+    showList();
+  });
+
   cloudLoad.addEventListener("click", () => {
     loadFromFirebase();
     alert("クラウドから最新データを読み込みました");
   });
 
-  // クラウド保存
   cloudSave.addEventListener("click", () => {
     saveToFirebase();
     alert("クラウドに保存しました");
   });
-
 </script>
 
 </body>
