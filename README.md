@@ -2,27 +2,116 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>tetsudo-site（Firebase同期）</title>
+  <title>tetsudo-site6</title>
   <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f5f5f5; }
-    header { background: #1976d2; color: #fff; padding: 10px 16px; }
-    header h1 { margin: 0 0 8px; font-size: 20px; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 4px; }
-    .tab { padding: 6px 10px; border-radius: 16px; cursor: pointer; font-size: 13px; }
-    .tab.active { background: #fff; color: #1976d2; font-weight: 600; }
-    .search-bar { padding: 10px 16px; background: #e3f2fd; }
-    .search-bar input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #bbb; font-size: 14px; }
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+    }
 
-    main { padding: 12px 16px 24px; }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      background: #fff;
+      min-height: 100vh;
+      box-shadow: 0 0 10px #0002;
+    }
 
-    .section-title { font-size: 16px; margin: 8px 0 12px; }
+    header {
+      background: #1976d2;
+      color: #fff;
+      padding: 12px 16px;
+    }
 
-    .card-list { display: flex; flex-direction: column; gap: 8px; }
-    .card { background: #fff; border-radius: 8px; padding: 10px 12px; border-left: 4px solid #ccc; cursor: pointer; }
-    .card:hover { background: #f0f7ff; }
-    .card-category { font-size: 11px; color: #666; margin-bottom: 4px; }
-    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-    .card-detail { font-size: 13px; color: #555; }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .tab {
+      padding: 6px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #fff;
+      border: 1px solid #fff4;
+    }
+
+    .tab.active {
+      background: #fff;
+      color: #1976d2;
+      font-weight: 600;
+    }
+
+    .search-bar {
+      padding: 10px 16px;
+      background: #e3f2fd;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      font-size: 14px;
+    }
+
+    main {
+      padding: 12px 16px 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      margin: 8px 0 12px;
+      text-align: center;
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      border-left: 4px solid #ccc;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      background: #f0f7ff;
+    }
+
+    .card-category {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-detail {
+      font-size: 13px;
+      color: #555;
+    }
 
     /* カテゴリ色 */
     .cat-京王 { border-left-color: #e57373; }
@@ -32,29 +121,78 @@
     .cat-資料 { border-left-color: #9e9e9e; }
     .cat-画像 { border-left-color: #ba68c8; }
 
-    /* 同期・管理 */
-    .settings { max-width: 480px; margin-top: 8px; }
-    .settings label { font-size: 13px; display: block; margin: 8px 0 4px; }
-    .settings input, .settings select, .settings textarea {
-      width: 100%; padding: 6px 8px; font-size: 13px;
-      border-radius: 4px; border: 1px solid #bbb; box-sizing: border-box;
+    /* 設定 */
+    .settings {
+      max-width: 480px;
+      margin: 0 auto;
     }
-    .settings textarea { resize: vertical; min-height: 60px; }
-    .settings button { margin-top: 10px; padding: 6px 12px; font-size: 13px; border-radius: 4px; border: none; background: #1976d2; color: #fff; cursor: pointer; }
-    .settings button:hover { background: #145ca3; }
-    .hint { font-size: 12px; color: #666; margin-top: 4px; }
-    .hidden { display: none; }
+
+    .settings label {
+      font-size: 13px;
+      display: block;
+      margin: 8px 0 4px;
+    }
+
+    .settings input,
+    .settings select,
+    .settings textarea {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: 1px solid #bbb;
+      box-sizing: border-box;
+    }
+
+    .settings textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .settings button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .settings button:hover {
+      background: #145ca3;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .hidden {
+      display: none;
+    }
 
     @media (max-width: 600px) {
-      .tabs { gap: 2px; }
-      .tab { font-size: 12px; padding: 5px 8px; }
-      .card { padding: 8px 10px; }
+      .container {
+        max-width: 100%;
+      }
+      .card {
+        padding: 10px;
+      }
+      .tab {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
     }
   </style>
 </head>
 <body>
+<div class="container">
+
 <header>
-  <h1>tetsudo-site</h1>
+  <h1>tetsudo-site6</h1>
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="すべて">すべて</div>
     <div class="tab" data-tab="京王">京王</div>
@@ -81,26 +219,26 @@
     <div class="section-title">同期・管理</div>
 
     <div class="settings">
-      <label for="adminPass">編集パスワード</label>
+      <label>編集パスワード</label>
       <input type="password" id="adminPass" placeholder="パスワードを入力">
       <button id="passSubmit">送信</button>
-      <div class="hint">正しいパスワードを入力すると、URL追加フォームが表示されます。</div>
+      <div class="hint">正しいパスワードを入力すると追加フォームが表示されます。</div>
     </div>
 
     <div class="settings hidden" id="addForm">
       <hr style="margin:16px 0;">
       <div class="section-title">新規URL追加</div>
 
-      <label for="newTitle">タイトル</label>
-      <input type="text" id="newTitle" placeholder="例：京王 2000系">
+      <label>タイトル</label>
+      <input type="text" id="newTitle">
 
-      <label for="newURL">URL</label>
-      <input type="text" id="newURL" placeholder="https://...">
+      <label>URL</label>
+      <input type="text" id="newURL">
 
-      <label for="newDetail">詳細</label>
-      <textarea id="newDetail" placeholder="例：特急京王八王子行き 新宿→笹塚"></textarea>
+      <label>詳細</label>
+      <textarea id="newDetail"></textarea>
 
-      <label for="newCategory">カテゴリ</label>
+      <label>カテゴリ</label>
       <select id="newCategory">
         <option value="京王">京王</option>
         <option value="JR">JR</option>
@@ -111,14 +249,19 @@
       </select>
 
       <button id="addSubmit">追加</button>
-      <div class="hint">追加したURLはFirebaseに保存され、他のデバイスにも同期されます。</div>
+
+      <hr style="margin:16px 0;">
+
+      <button id="cloudLoad">クラウド受信</button>
+      <button id="cloudSave">クラウド保存</button>
     </div>
   </div>
 </main>
 
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
 
@@ -129,19 +272,16 @@
     projectId: "tetsudo-site6",
     storageBucket: "tetsudo-site6.firebasestorage.app",
     messagingSenderId: "563943849207",
-    appId: "1:563943849207:web:1c813365201cb431d6e7f2",
-    measurementId: "G-JX8SDMF3ZB"
+    appId: "1:563943849207:web:1c813365201cb431d6e7f2"
   };
 
   const PASSWORD = "0829";
 
   const app = initializeApp(firebaseConfig);
-  getAnalytics(app);
-
-  const auth = getAuth();
   const db = getDatabase();
+  const auth = getAuth();
 
-  let items = []; // {title, url, detail, category}
+  let items = [];
   let currentTab = "すべて";
   let searchText = "";
 
@@ -161,22 +301,22 @@
   const newCategory = document.getElementById("newCategory");
   const addSubmit = document.getElementById("addSubmit");
 
+  const cloudLoad = document.getElementById("cloudLoad");
+  const cloudSave = document.getElementById("cloudSave");
+
   // 匿名ログイン
   signInAnonymously(auth).then(() => {
+    loadFromFirebase();
+  });
+
+  function loadFromFirebase() {
     const dataRef = ref(db, "urlData");
     onValue(dataRef, (snapshot) => {
       const val = snapshot.val();
-      if (val && Array.isArray(val)) {
-        items = val;
-      } else if (val && typeof val === "object") {
-        // 旧形式から移行する場合など
-        items = Object.values(val);
-      } else {
-        items = [];
-      }
+      items = val ? val : [];
       render();
     });
-  }).catch(console.error);
+  }
 
   function saveToFirebase() {
     const dataRef = ref(db, "urlData");
@@ -206,27 +346,16 @@
     cardList.innerHTML = "";
     filtered.forEach(item => {
       const card = document.createElement("div");
-      const catClass = "cat-" + (item.category || "").replace(/ /g, "");
+      const catClass = "cat-" + item.category;
       card.className = "card " + catClass;
-      card.addEventListener("click", () => {
-        if (item.url) window.open(item.url, "_blank");
-      });
+      card.onclick = () => window.open(item.url, "_blank");
 
-      const cat = document.createElement("div");
-      cat.className = "card-category";
-      cat.textContent = item.category || "";
+      card.innerHTML = `
+        <div class="card-category">${item.category}</div>
+        <div class="card-title">${item.title}</div>
+        <div class="card-detail">${item.detail}</div>
+      `;
 
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.textContent = item.title || "";
-
-      const detail = document.createElement("div");
-      detail.className = "card-detail";
-      detail.textContent = item.detail || "";
-
-      card.appendChild(cat);
-      card.appendChild(title);
-      card.appendChild(detail);
       cardList.appendChild(card);
     });
   }
@@ -235,8 +364,7 @@
   tabsEl.addEventListener("click", (e) => {
     const tab = e.target.closest(".tab");
     if (!tab) return;
-    const tabName = tab.dataset.tab;
-    currentTab = tabName;
+    currentTab = tab.dataset.tab;
 
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
@@ -281,8 +409,21 @@
     newCategory.value = "京王";
 
     alert("追加しました");
-    if (currentTab !== "同期・管理") render();
   });
+
+  // クラウド受信
+  cloudLoad.addEventListener("click", () => {
+    loadFromFirebase();
+    alert("クラウドから最新データを読み込みました");
+  });
+
+  // クラウド保存
+  cloudSave.addEventListener("click", () => {
+    saveToFirebase();
+    alert("クラウドに保存しました");
+  });
+
 </script>
+
 </body>
 </html>
