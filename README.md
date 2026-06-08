@@ -14,7 +14,7 @@
 
     .container {
       width: 100%;
-      max-width: 760px;
+      max-width: 900px;
       background: #fff;
       min-height: 100vh;
       box-shadow: 0 0 10px #0002;
@@ -93,7 +93,6 @@
       border-radius: 10px;
       padding: 14px;
       border-left: 6px solid #ccc;
-      cursor: pointer;
       transition: 0.2s;
     }
 
@@ -116,6 +115,33 @@
     .card-detail {
       font-size: 14px;
       color: #555;
+    }
+
+    /* 編集・削除ボタン */
+    .edit-buttons {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .edit-btn {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #1976d2;
+      color: #fff;
+    }
+
+    .delete-btn {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #d32f2f;
+      color: #fff;
     }
 
     /* カテゴリ色（強調版） */
@@ -242,12 +268,12 @@
       <label>編集パスワード</label>
       <input type="password" id="adminPass" placeholder="パスワードを入力">
       <button id="passSubmit" style="background:#555;color:#fff;">送信</button>
-      <div class="hint">正しいパスワードを入力すると追加フォームが表示されます。</div>
+      <div class="hint">正しいパスワードを入力すると編集・削除が有効になります。</div>
     </div>
 
     <div class="settings hidden" id="addForm">
       <hr style="margin:16px 0;">
-      <div class="section-title">新規URL追加</div>
+      <div class="section-title" id="formTitle">新規URL追加</div>
 
       <label>タイトル</label>
       <input type="text" id="newTitle">
@@ -304,6 +330,8 @@
   let items = [];
   let currentTab = "すべて";
   let searchText = "";
+  let adminMode = false;
+  let editIndex = null;
 
   const tabsEl = document.getElementById("tabs");
   const searchInput = document.getElementById("searchInput");
@@ -320,6 +348,7 @@
   const newDetail = document.getElementById("newDetail");
   const newCategory = document.getElementById("newCategory");
   const addSubmit = document.getElementById("addSubmit");
+  const formTitle = document.getElementById("formTitle");
 
   const cloudLoad = document.getElementById("cloudLoad");
   const cloudSave = document.getElementById("cloudSave");
@@ -364,11 +393,10 @@
       .sort((a, b) => a.title.localeCompare(b.title, "ja"));
 
     cardList.innerHTML = "";
-    filtered.forEach(item => {
+    filtered.forEach((item, index) => {
       const card = document.createElement("div");
       const catClass = "cat-" + item.category;
       card.className = "card " + catClass;
-      card.onclick = () => window.open(item.url, "_blank");
 
       card.innerHTML = `
         <div class="card-category">${item.category}</div>
@@ -376,8 +404,51 @@
         <div class="card-detail">${item.detail}</div>
       `;
 
+      if (adminMode) {
+        const btns = document.createElement("div");
+        btns.className = "edit-buttons";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "編集";
+        editBtn.onclick = () => startEdit(item, index);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "削除";
+        delBtn.onclick = () => deleteItem(index);
+
+        btns.appendChild(editBtn);
+        btns.appendChild(delBtn);
+        card.appendChild(btns);
+      } else {
+        card.onclick = () => window.open(item.url, "_blank");
+      }
+
       cardList.appendChild(card);
     });
+  }
+
+  // 編集開始
+  function startEdit(item, index) {
+    editIndex = index;
+    formTitle.textContent = "編集モード";
+    addSubmit.textContent = "保存";
+
+    newTitle.value = item.title;
+    newURL.value = item.url;
+    newDetail.value = item.detail;
+    newCategory.value = item.category;
+
+    addForm.classList.remove("hidden");
+  }
+
+  // 削除
+  function deleteItem(index) {
+    if (!confirm("削除しますか？")) return;
+    items.splice(index, 1);
+    saveToFirebase();
+    render();
   }
 
   // タブ切り替え
@@ -401,14 +472,17 @@
   // パスワードチェック
   passSubmit.addEventListener("click", () => {
     if (adminPass.value === PASSWORD) {
+      adminMode = true;
       addForm.classList.remove("hidden");
       adminPass.value = "";
+      alert("編集モードが有効になりました");
+      render();
     } else {
       alert("パスワードが違います");
     }
   });
 
-  // 追加
+  // 追加 / 保存
   addSubmit.addEventListener("click", () => {
     const title = newTitle.value.trim();
     const url = newURL.value.trim();
@@ -420,7 +494,15 @@
       return;
     }
 
-    items.push({ title, url, detail, category });
+    if (editIndex !== null) {
+      items[editIndex] = { title, url, detail, category };
+      editIndex = null;
+      formTitle.textContent = "新規URL追加";
+      addSubmit.textContent = "追加";
+    } else {
+      items.push({ title, url, detail, category });
+    }
+
     saveToFirebase();
 
     newTitle.value = "";
@@ -428,7 +510,8 @@
     newDetail.value = "";
     newCategory.value = "京王";
 
-    alert("追加しました");
+    alert("保存しました");
+    render();
   });
 
   // クラウド受信
