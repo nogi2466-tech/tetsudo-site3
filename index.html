@@ -14,7 +14,7 @@
 
     .container {
       width: 100%;
-      max-width: 720px;
+      max-width: 760px;
       background: #fff;
       min-height: 100vh;
       box-shadow: 0 0 10px #0002;
@@ -23,12 +23,12 @@
     header {
       background: #1976d2;
       color: #fff;
-      padding: 12px 16px;
+      padding: 14px 16px;
     }
 
     header h1 {
-      margin: 0 0 8px;
-      font-size: 20px;
+      margin: 0 0 10px;
+      font-size: 22px;
       text-align: center;
     }
 
@@ -36,16 +36,21 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 4px;
+      gap: 6px;
     }
 
     .tab {
-      padding: 6px 10px;
-      border-radius: 16px;
+      padding: 8px 14px;
+      border-radius: 18px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 14px;
       color: #fff;
       border: 1px solid #fff4;
+      transition: 0.2s;
+    }
+
+    .tab:hover {
+      background: #fff3;
     }
 
     .tab.active {
@@ -55,39 +60,39 @@
     }
 
     .search-bar {
-      padding: 10px 16px;
+      padding: 12px 16px;
       background: #e3f2fd;
     }
 
     .search-bar input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       border-radius: 6px;
       border: 1px solid #bbb;
-      font-size: 14px;
+      font-size: 15px;
     }
 
     main {
-      padding: 12px 16px 24px;
+      padding: 16px;
     }
 
     .section-title {
-      font-size: 16px;
-      margin: 8px 0 12px;
+      font-size: 18px;
+      margin: 10px 0 16px;
       text-align: center;
     }
 
     .card-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .card {
       background: #fff;
-      border-radius: 8px;
-      padding: 12px;
-      border-left: 4px solid #ccc;
+      border-radius: 10px;
+      padding: 14px;
+      border-left: 6px solid #ccc;
       cursor: pointer;
       transition: 0.2s;
     }
@@ -97,72 +102,80 @@
     }
 
     .card-category {
-      font-size: 11px;
+      font-size: 12px;
       color: #666;
       margin-bottom: 4px;
     }
 
     .card-title {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 600;
       margin-bottom: 4px;
     }
 
     .card-detail {
-      font-size: 13px;
+      font-size: 14px;
       color: #555;
     }
 
-    /* カテゴリ色 */
-    .cat-京王 { border-left-color: #e57373; }
-    .cat-JR { border-left-color: #64b5f6; }
-    .cat-大手私鉄 { border-left-color: #81c784; }
-    .cat-その他 { border-left-color: #ffb74d; }
-    .cat-資料 { border-left-color: #9e9e9e; }
-    .cat-画像 { border-left-color: #ba68c8; }
+    /* カテゴリ色（強調版） */
+    .cat-京王 { border-left-color: #ff80ab; }
+    .cat-JR { border-left-color: #4caf50; }
+    .cat-大手私鉄 { border-left-color: #ffd54f; }
+    .cat-その他 { border-left-color: #9e9e9e; }
+    .cat-資料 { border-left-color: #ba68c8; }
 
-    /* 設定 */
+    /* 設定画面 */
     .settings {
-      max-width: 480px;
+      max-width: 500px;
       margin: 0 auto;
     }
 
     .settings label {
-      font-size: 13px;
+      font-size: 14px;
       display: block;
-      margin: 8px 0 4px;
+      margin: 10px 0 4px;
     }
 
     .settings input,
     .settings select,
     .settings textarea {
       width: 100%;
-      padding: 6px 8px;
-      font-size: 13px;
-      border-radius: 4px;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
       border: 1px solid #bbb;
       box-sizing: border-box;
     }
 
     .settings textarea {
       resize: vertical;
-      min-height: 60px;
+      min-height: 70px;
     }
 
     .settings button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      font-size: 13px;
-      border-radius: 4px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      font-size: 15px;
+      border-radius: 6px;
       border: none;
-      background: #1976d2;
-      color: #fff;
       cursor: pointer;
+      font-weight: 600;
     }
 
-    .settings button:hover {
-      background: #145ca3;
+    /* クラウドボタン強調 */
+    #cloudLoad {
+      background: #4caf50;
+      color: #fff;
     }
+
+    #cloudSave {
+      background: #1976d2;
+      color: #fff;
+    }
+
+    #cloudLoad:hover { background: #3d8b41; }
+    #cloudSave:hover { background: #145ca3; }
 
     .hint {
       font-size: 12px;
@@ -174,16 +187,23 @@
       display: none;
     }
 
+    /* スマホ最適化 */
     @media (max-width: 600px) {
       .container {
         max-width: 100%;
       }
-      .card {
-        padding: 10px;
-      }
       .tab {
-        font-size: 11px;
-        padding: 5px 8px;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+      .card {
+        padding: 12px;
+      }
+      .card-title {
+        font-size: 15px;
+      }
+      .card-detail {
+        font-size: 13px;
       }
     }
   </style>
@@ -221,7 +241,7 @@
     <div class="settings">
       <label>編集パスワード</label>
       <input type="password" id="adminPass" placeholder="パスワードを入力">
-      <button id="passSubmit">送信</button>
+      <button id="passSubmit" style="background:#555;color:#fff;">送信</button>
       <div class="hint">正しいパスワードを入力すると追加フォームが表示されます。</div>
     </div>
 
@@ -248,7 +268,7 @@
         <option value="画像">画像</option>
       </select>
 
-      <button id="addSubmit">追加</button>
+      <button id="addSubmit" style="background:#1976d2;color:#fff;">追加</button>
 
       <hr style="margin:16px 0;">
 
