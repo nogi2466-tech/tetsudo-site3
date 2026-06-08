@@ -98,6 +98,7 @@
       padding: 12px;
       border-left: 6px solid #ccc;
       transition: 0.2s;
+      cursor: pointer;
     }
 
     .card:hover {
@@ -370,6 +371,7 @@
 
   const tabsEl = document.getElementById("tabs");
   const searchInput = document.getElementById("searchInput");
+  const searchBar = document.querySelector(".search-bar");
   const cardList = document.getElementById("cardList");
   const sectionTitle = document.getElementById("sectionTitle");
   const listSection = document.getElementById("listSection");
@@ -465,6 +467,12 @@
       card.appendChild(title);
       card.appendChild(detail);
 
+      // カードタップで常にURLを開く
+      card.onclick = () => {
+        if (item.url) window.open(item.url, "_blank");
+      };
+
+      // 編集モードなら編集・削除ボタンを追加
       if (adminMode) {
         const btns = document.createElement("div");
         btns.className = "edit-buttons";
@@ -472,20 +480,22 @@
         const editBtn = document.createElement("button");
         editBtn.className = "edit-btn";
         editBtn.textContent = "編集";
-        editBtn.onclick = () => startEdit(item, index);
+        editBtn.onclick = (e) => {
+          e.stopPropagation(); // カードクリックを止める
+          startEdit(item, index);
+        };
 
         const delBtn = document.createElement("button");
         delBtn.className = "delete-btn";
         delBtn.textContent = "削除";
-        delBtn.onclick = () => deleteItem(index);
+        delBtn.onclick = (e) => {
+          e.stopPropagation(); // カードクリックを止める
+          deleteItem(index);
+        };
 
         btns.appendChild(editBtn);
         btns.appendChild(delBtn);
         card.appendChild(btns);
-      } else {
-        card.onclick = () => {
-          if (item.url) window.open(item.url, "_blank");
-        };
       }
 
       cardList.appendChild(card);
@@ -505,6 +515,7 @@
     newCategory.value = item.category || "京王";
 
     viewMode = "settings";
+    searchBar.classList.add("hidden");
     passwordBlock.classList.add("hidden");
     formBlock.classList.remove("hidden");
     updateView();
@@ -528,12 +539,14 @@
 
     if (tabName === "同期・管理") {
       viewMode = "settings";
+      searchBar.classList.add("hidden");
       updateView();
       return;
     }
 
     currentTab = tabName;
     viewMode = "list";
+    searchBar.classList.remove("hidden");
     updateView();
     render();
   });
@@ -578,6 +591,7 @@
     alert("保存しました");
     resetForm();
     viewMode = "list";
+    searchBar.classList.remove("hidden");
     updateView();
     render();
   });
@@ -585,6 +599,7 @@
   backToList.addEventListener("click", () => {
     resetForm();
     viewMode = "list";
+    searchBar.classList.remove("hidden");
     updateView();
     render();
   });
