@@ -53,10 +53,6 @@
       white-space: nowrap;
     }
 
-    .tab:hover {
-      background: #fff3;
-    }
-
     .tab.active {
       background: #fff;
       color: #1976d2;
@@ -141,7 +137,6 @@
     .edit-btn { background: #1976d2; }
     .delete-btn { background: #d32f2f; }
 
-    /* カテゴリ色 */
     .cat-京王 { border-left-color: #ff80ab; }
     .cat-JR { border-left-color: #4caf50; }
     .cat-大手私鉄 { border-left-color: #ffd54f; }
@@ -184,83 +179,7 @@
       font-weight: 600;
     }
 
-    #cloudLoad {
-      background: #4caf50;
-      color: #fff;
-    }
-    #cloudSave {
-      background: #1976d2;
-      color: #fff;
-    }
-    #cloudLoad:hover { background: #3d8b41; }
-    #cloudSave:hover { background: #145ca3; }
-
-    .hint {
-      font-size: 12px;
-      color: #666;
-      margin-top: 4px;
-    }
-
     .hidden { display: none; }
-
-    .back-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .back-btn {
-      padding: 6px 10px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #555;
-      color: #fff;
-    }
-
-    /* PC向け（広く） */
-    @media (min-width: 900px) {
-      .container {
-        max-width: 100%;
-      }
-      main {
-        padding: 20px 40px 32px;
-      }
-      .card {
-        padding: 14px 16px;
-      }
-      .tab {
-        font-size: 15px;
-        padding: 8px 16px;
-      }
-    }
-
-    /* スマホ向け（小さく・全部入るように） */
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 18px;
-      }
-      .tabs {
-        gap: 4px;
-      }
-      .tab {
-        font-size: 11px;
-        padding: 5px 8px;
-      }
-      .card {
-        padding: 10px;
-      }
-      .card-title {
-        font-size: 15px;
-      }
-      .card-detail {
-        font-size: 13px;
-      }
-      main {
-        padding: 10px 8px 20px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -283,7 +202,6 @@
 <div class="search-bar">
   <input type="text" id="searchInput" placeholder="タイトルで検索…">
 </div>
-
 <main>
   <!-- 一覧画面 -->
   <div id="listSection">
@@ -367,7 +285,7 @@
   let searchText = "";
   let adminMode = false;
   let editIndex = null;
-  let viewMode = "list"; // "list" or "settings"
+  let viewMode = "list";
 
   const tabsEl = document.getElementById("tabs");
   const searchInput = document.getElementById("searchInput");
@@ -481,7 +399,7 @@
         editBtn.className = "edit-btn";
         editBtn.textContent = "編集";
         editBtn.onclick = (e) => {
-          e.stopPropagation(); // カードクリックを止める
+          e.stopPropagation();
           startEdit(item, index);
         };
 
@@ -489,7 +407,7 @@
         delBtn.className = "delete-btn";
         delBtn.textContent = "削除";
         delBtn.onclick = (e) => {
-          e.stopPropagation(); // カードクリックを止める
+          e.stopPropagation();
           deleteItem(index);
         };
 
@@ -505,9 +423,10 @@
   function startEdit(item, index) {
     if (!adminMode) return;
     editIndex = index;
+
     formTitle.textContent = "URL編集";
     formModeLabel.textContent = "編集モード";
-    addSubmit.textContent = "保存";
+    addSubmit.textContent = "上書き保存";
 
     newTitle.value = item.title || "";
     newURL.value = item.url || "";
@@ -589,6 +508,7 @@
 
     saveToFirebase();
     alert("保存しました");
+
     resetForm();
     viewMode = "list";
     searchBar.classList.remove("hidden");
@@ -614,7 +534,6 @@
     alert("クラウドに保存しました");
   });
 
-  // 初期表示
   updateView();
   render();
 </script>
