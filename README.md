@@ -97,23 +97,40 @@
       gap: 10px;
     }
 
+    /* カードデザイン（改良版） */
     .card {
       background: #fff;
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 16px;
       border-left: 6px solid #ccc;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       transition: 0.2s;
       cursor: pointer;
     }
 
     .card:hover {
-      background: #f0f7ff;
+      background: #f7faff;
+      transform: translateY(-2px);
     }
 
     .card-category {
-      font-size: 12px;
-      margin-bottom: 4px;
-      font-weight: bold;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      opacity: 0.9;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .card-detail {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #444;
     }
 
     /* カテゴリ色（カード左線 & カテゴリ名） */
@@ -215,7 +232,6 @@
 <div class="search-bar">
   <input type="text" id="searchInput" placeholder="タイトルで検索…">
 </div>
-
 <main>
   <!-- 一覧画面 -->
   <div id="listSection">
@@ -559,3 +575,4 @@
 
 </body>
 </html>
+
