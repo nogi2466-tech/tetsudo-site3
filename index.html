@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>tetsudo-site6</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -52,6 +53,14 @@
       transition: 0.2s;
       white-space: nowrap;
     }
+
+    /* タブのカテゴリ色 */
+    .tab[data-tab="京王"] { background: #b4007f; }
+    .tab[data-tab="JR"] { background: #4caf50; }
+    .tab[data-tab="大手私鉄"] { background: #ffd54f; color:#333; }
+    .tab[data-tab="その他"] { background: #9e9e9e; }
+    .tab[data-tab="資料"] { background: #ba68c8; }
+    .tab[data-tab="画像"] { background: #42a5f5; }
 
     .tab.active {
       background: #fff;
@@ -103,20 +112,28 @@
 
     .card-category {
       font-size: 12px;
-      color: #666;
       margin-bottom: 4px;
+      font-weight: bold;
     }
 
-    .card-title {
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
+    /* カテゴリ色（カード左線 & カテゴリ名） */
+    .cat-京王 { border-left-color: #b4007f; }
+    .cat-京王 .card-category { color: #b4007f; }
 
-    .card-detail {
-      font-size: 14px;
-      color: #555;
-    }
+    .cat-JR { border-left-color: #4caf50; }
+    .cat-JR .card-category { color: #4caf50; }
+
+    .cat-大手私鉄 { border-left-color: #ffd54f; }
+    .cat-大手私鉄 .card-category { color: #d4a600; }
+
+    .cat-その他 { border-left-color: #9e9e9e; }
+    .cat-その他 .card-category { color: #9e9e9e; }
+
+    .cat-資料 { border-left-color: #ba68c8; }
+    .cat-資料 .card-category { color: #ba68c8; }
+
+    .cat-画像 { border-left-color: #42a5f5; }
+    .cat-画像 .card-category { color: #42a5f5; }
 
     .edit-buttons {
       margin-top: 8px;
@@ -136,12 +153,6 @@
 
     .edit-btn { background: #1976d2; }
     .delete-btn { background: #d32f2f; }
-
-    .cat-京王 { border-left-color: #ff80ab; }
-    .cat-JR { border-left-color: #4caf50; }
-    .cat-大手私鉄 { border-left-color: #ffd54f; }
-    .cat-その他 { border-left-color: #9e9e9e; }
-    .cat-資料 { border-left-color: #ba68c8; }
 
     .settings {
       max-width: 520px;
@@ -182,11 +193,13 @@
     .hidden { display: none; }
   </style>
 </head>
+
 <body>
 <div class="container">
 
 <header>
   <h1>tetsudo-site6</h1>
+
   <div class="tabs" id="tabs">
     <div class="tab active" data-tab="すべて">すべて</div>
     <div class="tab" data-tab="京王">京王</div>
@@ -202,6 +215,7 @@
 <div class="search-bar">
   <input type="text" id="searchInput" placeholder="タイトルで検索…">
 </div>
+
 <main>
   <!-- 一覧画面 -->
   <div id="listSection">
@@ -258,63 +272,6 @@
 </main>
 
 </div>
-<main>
-  <!-- 一覧画面 -->
-  <div id="listSection">
-    <div class="section-title" id="sectionTitle">すべて</div>
-    <div class="card-list" id="cardList"></div>
-  </div>
-
-  <!-- 追加 / 編集画面 -->
-  <div id="settingsSection" class="hidden">
-    <div class="section-title">同期・管理</div>
-
-    <div class="settings" id="passwordBlock">
-      <label>編集パスワード</label>
-      <input type="password" id="adminPass" placeholder="パスワードを入力">
-      <button id="passSubmit" style="background:#555;color:#fff;">送信</button>
-      <div class="hint">正しいパスワードを入力すると追加・編集・削除が有効になります。</div>
-    </div>
-
-    <div class="settings hidden" id="formBlock">
-      <div class="back-row">
-        <button class="back-btn" id="backToList">◀ 戻る</button>
-        <span id="formModeLabel" style="font-size:14px;color:#333;"></span>
-      </div>
-
-      <div class="section-title" id="formTitle">新規URL追加</div>
-
-      <label>タイトル</label>
-      <input type="text" id="newTitle">
-
-      <label>URL</label>
-      <input type="text" id="newURL">
-
-      <label>詳細</label>
-      <textarea id="newDetail"></textarea>
-
-      <label>カテゴリ</label>
-      <select id="newCategory">
-        <option value="京王">京王</option>
-        <option value="JR">JR</option>
-        <option value="大手私鉄">大手私鉄</option>
-        <option value="その他">その他</option>
-        <option value="資料">資料</option>
-        <option value="画像">画像</option>
-      </select>
-
-      <button id="addSubmit" style="background:#1976d2;color:#fff;">追加</button>
-
-      <hr style="margin:16px 0;">
-
-      <button id="cloudLoad">クラウド受信</button>
-      <button id="cloudSave">クラウド保存</button>
-    </div>
-  </div>
-</main>
-
-</div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
@@ -389,9 +346,11 @@
     if (viewMode === "list") {
       listSection.classList.remove("hidden");
       settingsSection.classList.add("hidden");
+      sectionTitle.classList.remove("hidden");
     } else {
       listSection.classList.add("hidden");
       settingsSection.classList.remove("hidden");
+      sectionTitle.classList.add("hidden");
     }
   }
 
@@ -413,7 +372,11 @@
 
     const filtered = items
       .filter(item => {
-        if (currentTab !== "すべて" && item.category !== currentTab) return false;
+        if (currentTab === "すべて") {
+          if (item.category === "資料" || item.category === "画像") return false;
+        } else if (currentTab !== "すべて" && item.category !== currentTab) {
+          return false;
+        }
         if (!searchText) return true;
         return (item.title || "").toLowerCase().includes(searchText.toLowerCase());
       })
@@ -441,12 +404,10 @@
       card.appendChild(title);
       card.appendChild(detail);
 
-      // カードタップでURLを開く
       card.onclick = () => {
         if (item.url) window.open(item.url, "_blank");
       };
 
-      // ← ここが重要：本当の index を取得
       const realIndex = items.indexOf(item);
 
       if (adminMode) {
